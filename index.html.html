@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis — Leonardo Passos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700&family=Montserrat:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#1c1c1c;--bg2:#222;--surface:#282828;--surface2:#2f2f2f;--border:#3a3a3a;--gold:#c9a96e;--gold2:#e8c98a;--gold-dim:#7a6040;--text:#f0ece4;--muted:#8a8070;--red:#c0634a;--green:#6a9e78;--blue:#5a8fa8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 60px,rgba(201,169,110,0.012) 60px,rgba(201,169,110,0.012) 61px);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:36px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo-wrap{padding:0 28px 28px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.logo-rp{font-weight:700;font-size:20px;color:var(--gold);letter-spacing:4px;}
+.logo-rp span{color:var(--muted);font-weight:300;font-size:9px;letter-spacing:4px;display:block;margin-top:3px;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:10px;font-weight:500;}
+.nav-label{font-size:9px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;padding:12px 14px 6px;font-weight:500;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;transition:all 0.2s;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0.5px;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(201,169,110,0.05);}
+.nav-item.active{color:var(--gold);background:rgba(201,169,110,0.08);border-left-color:var(--gold);}
+.nav-icon{font-size:13px;width:18px;text-align:center;}
+.sidebar-footer{margin-top:auto;padding:20px 28px;border-top:1px solid var(--border);}
+.sf-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--gold);}
+.sf-role{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+.sf-badge{margin-top:10px;display:inline-block;font-size:9px;color:var(--green);border:1px solid var(--green);padding:3px 10px;letter-spacing:1.5px;text-transform:uppercase;}
+.main{padding:44px 48px;display:flex;flex-direction:column;gap:28px;}
+.page-eyebrow{font-size:9px;color:var(--gold-dim);letter-spacing:4px;text-transform:uppercase;margin-bottom:6px;font-weight:500;}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;letter-spacing:2px;line-height:1;}
+.page-title strong{color:var(--gold);font-weight:600;}
+.gold-divider{width:50px;height:1px;background:var(--gold);margin:10px 0 0;}
+.header{display:flex;align-items:flex-start;justify-content:space-between;}
+.header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.date-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);border:1px solid var(--border);padding:7px 14px;letter-spacing:1px;}
+.btn{background:transparent;color:var(--gold);border:1px solid var(--gold-dim);padding:8px 18px;font-family:'Montserrat',sans-serif;font-weight:600;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.btn:hover{background:rgba(201,169,110,0.08);border-color:var(--gold);}
+.btn-sm{padding:6px 14px;font-size:9px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.stat-card{background:var(--surface);padding:24px 20px;position:relative;transition:background 0.2s;}
+.stat-card:hover{background:var(--surface2);}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2.5px;font-weight:500;margin-bottom:12px;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--gold);letter-spacing:-0.5px;line-height:1;}
+.stat-value.green{color:var(--green);}
+.stat-value.red{color:var(--red);}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:6px;letter-spacing:0.5px;}
+.panels-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.panel{background:var(--surface);border:1px solid var(--border);padding:24px 28px;position:relative;}
+.panel::before{content:'';position:absolute;top:0;left:0;width:40px;height:1px;background:var(--gold);}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.panel-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:1px;}
+.panel-badge{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);border:1px solid var(--border);padding:4px 10px;}
+.chart-wrap{position:relative;height:200px;}
+.period-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);flex-wrap:wrap;}
+.period-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:500;margin-right:4px;}
+.period-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 14px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.period-btn:hover{border-color:var(--gold-dim);color:var(--text);}
+.period-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,169,110,0.08);}
+.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.cmp-cell{background:var(--surface);padding:16px 18px;}
+.cmp-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:500;margin-bottom:8px;}
+.cmp-value{font-family:'DM Mono',monospace;font-size:15px;}
+.cmp-delta{font-size:10px;margin-top:4px;font-family:'DM Mono',monospace;}
+.delta-up{color:var(--red);}
+.delta-down{color:var(--green);}
+.txn-table{width:100%;border-collapse:collapse;}
+.txn-table th{font-size:9px;color:var(--gold-dim);text-transform:uppercase;letter-spacing:2px;font-weight:600;text-align:left;padding:0 14px 12px;border-bottom:1px solid var(--border);}
+.txn-table td{padding:11px 14px;font-size:12px;border-bottom:1px solid rgba(58,58,58,0.5);letter-spacing:0.3px;vertical-align:middle;}
+.txn-table tr:last-child td{border-bottom:none;}
+.txn-table tr:hover td{background:rgba(201,169,110,0.03);}
+.cat-badge{display:inline-block;padding:2px 9px;font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;border:1px solid;}
+.amount-col{color:var(--red);font-family:'DM Mono',monospace;font-size:12px;}
+.orc-list{display:flex;flex-direction:column;gap:14px;}
+.orc-item{}
+.orc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.orc-name{font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;}
+.orc-dot{width:6px;height:6px;flex-shrink:0;}
+.orc-vals{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.orc-bar{height:4px;background:var(--border);border-radius:2px;}
+.orc-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+.proj-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.proj-card{background:var(--surface);padding:20px 18px;}
+.proj-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:500;margin-bottom:10px;}
+.proj-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--gold);}
+.proj-value.green{color:var(--green);}
+.proj-value.red{color:var(--red);}
+.proj-sub{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6;}
+.upload-zone{border:1px dashed var(--border);padding:40px;text-align:center;cursor:pointer;transition:all 0.3s;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold-dim);background:rgba(201,169,110,0.03);}
+.upload-icon{font-size:28px;margin-bottom:12px;opacity:0.5;}
+.upload-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:1px;margin-bottom:6px;}
+.upload-sub{font-size:11px;color:var(--muted);margin-bottom:20px;}
+#fileInput{display:none;}
+.preview-wrap{margin-top:16px;border:1px solid var(--border);background:var(--surface2);}
+.preview-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.preview-title{font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:600;}
+.col-select-wrap{display:flex;gap:14px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--border);}
+.col-select-item{display:flex;flex-direction:column;gap:5px;}
+.col-select-label{font-size:9px;color:var(--gold-dim);letter-spacing:2px;text-transform:uppercase;font-weight:600;}
+.col-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;font-size:11px;padding:6px 10px;outline:none;cursor:pointer;min-width:140px;}
+.preview-tbl-wrap{overflow-x:auto;max-height:200px;overflow-y:auto;}
+.preview-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.preview-tbl th{padding:7px 12px;font-size:9px;color:var(--gold-dim);text-transform:uppercase;letter-spacing:2px;font-weight:600;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface);}
+.preview-tbl td{padding:7px 12px;border-bottom:1px solid rgba(58,58,58,0.4);color:var(--muted);white-space:nowrap;}
+.preview-foot{padding:12px 18px;border-top:1px solid var(--border);}
+.empty-state{text-align:center;padding:40px;color:var(--muted);}
+.empty-icon{font-size:26px;margin-bottom:12px;opacity:0.3;}
+.empty-state p{font-size:12px;}
+.notif{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--gold-dim);padding:14px 22px;font-size:12px;z-index:200;transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:280px;}
+.notif::before{content:'';position:absolute;top:0;left:0;width:30px;height:1px;background:var(--gold);}
+.notif.show{transform:translateY(0);opacity:1;}
+.notif-title{font-weight:600;color:var(--gold);margin-bottom:3px;font-size:12px;}
+.notif-msg{color:var(--muted);font-size:11px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);padding:40px;width:500px;position:relative;transform:translateY(16px);transition:transform 0.3s;max-height:80vh;overflow-y:auto;}
+.modal::before{content:'';position:absolute;top:0;left:0;width:60px;height:1px;background:var(--gold);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-eyebrow{font-size:9px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;letter-spacing:1px;margin-bottom:8px;}
+.modal-divider{width:40px;height:1px;background:var(--gold);margin:10px 0 18px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:22px;line-height:1.8;}
+.modal-steps{display:flex;flex-direction:column;gap:14px;margin-bottom:22px;}
+.modal-step{display:flex;gap:14px;align-items:flex-start;}
+.step-num{width:22px;height:22px;border:1px solid var(--gold-dim);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;flex-shrink:0;}
+.step-text{font-size:12px;line-height:1.7;padding-top:2px;color:var(--muted);}
+.step-text strong{color:var(--gold);}
+.modal-input{width:100%;background:var(--surface2);border:1px solid var(--border);padding:10px 16px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;outline:none;margin-bottom:12px;}
+.modal-actions{display:flex;gap:10px;}
+.modal-confirm{flex:1;background:transparent;color:var(--gold);border:1px solid var(--gold);padding:11px;font-family:'Montserrat',sans-serif;font-weight:600;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.modal-confirm:hover{background:rgba(201,169,110,0.1);}
+.modal-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);padding:11px 18px;font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+.cat-select-list{display:flex;flex-direction:column;gap:7px;margin-bottom:22px;}
+.cat-select-item{padding:11px 14px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.2s;display:flex;align-items:center;gap:10px;}
+.cat-select-item:hover{border-color:var(--gold-dim);background:rgba(201,169,110,0.05);}
+.cat-select-item.selected{border-color:var(--gold);color:var(--gold);}
+.dica-box{background:rgba(201,169,110,0.05);border:1px solid var(--gold-dim);padding:16px 20px;display:flex;gap:14px;align-items:flex-start;}
+.dica-text{font-size:12px;color:var(--muted);line-height:1.8;}
+.dica-text strong{color:var(--gold);}
+.sheet-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted);letter-spacing:1px;font-family:'DM Mono',monospace;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+* { scrollbar-width: thin; scrollbar-color: var(--gold-dim) var(--bg2); }
+.dist-bar-wrap{display:flex;height:28px;border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.dist-seg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;letter-spacing:0.5px;transition:width 0.6s ease;}
+.vida-card{background:var(--surface);border:1px solid var(--border);padding:20px 22px;position:relative;}
+.vida-card::before{content:'';position:absolute;top:0;left:0;width:30px;height:2px;}
+.vida-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(58,58,58,0.4);font-size:12px;}
+.vida-row:last-child{border-bottom:none;}
+.vida-label{color:var(--muted);display:flex;align-items:center;gap:8px;}
+.vida-val{font-family:'DM Mono',monospace;font-weight:500;}
+.vida-badge{font-size:9px;padding:2px 8px;letter-spacing:1px;text-transform:uppercase;border:1px solid;}
+.status-dot{width:6px;height:6px;background:var(--muted);}
+.status-dot.on{background:var(--green);box-shadow:0 0 5px var(--green);}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-rp">LP</div>
+    <div class="logo-sub">Jarvis</div>
+  </div>
+  <div class="nav-label">Principal</div>
+  <div class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">◈</span> Dashboard</div>
+  <div class="nav-item" onclick="switchTab('historico')"><span class="nav-icon">◫</span> Histórico</div>
+  <div class="nav-item" onclick="switchTab('projecao')"><span class="nav-icon">◎</span> Projeção</div>
+  <div class="nav-item" onclick="switchTab('transactions')"><span class="nav-icon">≡</span> Transações</div>
+  <div class="nav-label">Ferramentas</div>
+  <div class="nav-item" onclick="switchTab('upload')"><span class="nav-icon">↑</span> Importar Fatura</div>
+  <div class="nav-item" onclick="switchTab('orcamento')"><span class="nav-icon">◉</span> Orçamento</div>
+  <div class="nav-label">Integração</div>
+  <div class="nav-item" onclick="openSheetsModal()"><span class="nav-icon">⊞</span> Google Sheets</div>
+  <div class="sidebar-footer">
+    <div class="sf-name">Leonardo Passos</div>
+    <div class="sf-role">RP Capital · Jarvis</div>
+    <div class="sf-badge">Zero custo extra</div>
+  </div>
+</aside>
+<main class="main" id="mainContent">
+
+<div id="tab-dashboard">
+  <div class="header">
+    <div><div class="page-eyebrow">Visão Geral</div><div class="page-title">Dashboard <strong>Financeiro</strong></div><div class="gold-divider"></div></div>
+    <div class="header-right">
+      <div class="sheet-status"><div class="status-dot" id="statusDot"></div><span id="statusText">Não conectado</span></div>
+      <div class="date-badge" id="currentDate"></div>
+      <button class="btn" onclick="openSheetsModal()">⊞ Exportar CSV</button>
+    </div>
+  </div>
+
+  <!-- PAINEL DE CONFIGURAÇÃO EDITÁVEL -->
+  <div style="background:var(--surface2);border:1px solid var(--border);padding:18px 20px">
+    <div style="font-size:9px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-bottom:14px">Configuração do mês</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:14px">
+
+      <!-- Renda -->
+      <div style="background:var(--surface);padding:16px 18px">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Renda</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">R$</span>
+          <input id="rendaInput" type="text" inputmode="numeric" placeholder="5500"
+            style="background:transparent;border:none;border-bottom:1px solid var(--gold-dim);color:var(--green);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:110px;outline:none;padding:0 0 3px 0;letter-spacing:0.5px"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'');saveConfig()" onchange="saveConfig()">
+        </div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px">salário do mês</div>
+      </div>
+
+      <!-- Lazer -->
+      <div style="background:var(--surface);padding:16px 18px">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Limite Lazer</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">R$</span>
+          <input id="lazerInput" type="text" inputmode="numeric" placeholder="741"
+            style="background:transparent;border:none;border-bottom:1px solid var(--gold-dim);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:110px;outline:none;padding:0 0 3px 0;letter-spacing:0.5px"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'');saveConfig()" onchange="saveConfig()">
+        </div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px">teto mensal variável</div>
+      </div>
+
+      <!-- Reserva viagem -->
+      <div style="background:var(--surface);padding:16px 18px">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Reserva Viagem</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">R$</span>
+          <input id="viagemInput" type="text" inputmode="numeric" placeholder="500"
+            style="background:transparent;border:none;border-bottom:1px solid var(--gold-dim);color:#6a9e78;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:110px;outline:none;padding:0 0 3px 0;letter-spacing:0.5px"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'');saveConfig()" onchange="saveConfig()">
+        </div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px">separado todo mês</div>
+      </div>
+
+      <!-- Poupança calculada -->
+      <div style="background:var(--surface);padding:16px 18px;border-left:2px solid var(--green)">
+        <div style="font-size:9px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Poupança real</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--green);margin-bottom:6px" id="poupancaCalc">R$ 0</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.5px" id="poupancaHint">renda − fixos − lazer − viagem</div>
+      </div>
+
+    </div>
+    <div id="rendaBar"></div>
+  </div>
+
+  <div class="period-bar" id="dashPeriodBar">
+    <span class="period-label">Período</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total Fixos</div><div class="stat-value" id="statFixo">R$ 0</div><div class="stat-sub" id="statFixoSub">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Variáveis</div><div class="stat-value" id="statVar">R$ 0</div><div class="stat-sub" id="statVarSub">—</div></div>
+    <div class="stat-card"><div class="stat-label">Reserva Viagem</div><div class="stat-value green" id="statViagem">R$ 0</div><div class="stat-sub" id="statViagemSub">—</div></div>
+    <div class="stat-card">
+      <div class="stat-label">Renda vs Comprometido</div>
+      <div class="stat-value" id="statSaldo">—</div>
+      <div class="stat-sub" id="statSaldoSub">—</div>
+      <div id="statDeficit" style="margin-top:10px;padding:8px 10px;font-size:11px;font-family:'DM Mono',monospace;display:none;border-radius:2px"></div>
+    </div>
+  </div>
+
+  <div class="panels-row">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Por Categoria IBGE</div><div class="panel-badge">Fixo · Variável</div></div>
+      <div class="chart-wrap"><canvas id="chartPie"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">Orçamento vs Realizado</div><div class="panel-badge" id="orcPeriodBadge">—</div></div>
+      <div class="orc-list" id="orcList" style="max-height:320px;overflow-y:auto;padding-right:4px"></div>
+    </div>
+  </div>
+
+  <!-- CATEGORIAS IBGE NO DASHBOARD -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Por categoria IBGE</div><div class="panel-badge" id="ibgeDashBadge">—</div></div>
+    <div id="ibgeDashGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)"></div>
+  </div>
+
+  <!-- PARCELAS PRICE (substitui movimentações recentes) -->
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Financiamento do Carro</div><div class="panel-badge" id="pricebadge">Tabela Price · 36x</div></div>
+    <div id="pricePanel"></div>
+  </div>
+</div>
+
+<div id="tab-historico" style="display:none">
+  <div class="header"><div><div class="page-eyebrow">Análise</div><div class="page-title">Histórico & <strong>Comparação</strong></div><div class="gold-divider"></div></div></div>
+
+  <div class="period-bar" style="gap:6px">
+    <span class="period-label">Visão</span>
+    <button class="period-btn active" id="vBtn1" onclick="setVisao('ibge',this)">Categorias IBGE</button>
+    <button class="period-btn" id="vBtn2" onclick="setVisao('blocos',this)">Fixo / Variável</button>
+    <button class="period-btn" id="vBtn3" onclick="setVisao('comparativo',this)">Comparativo</button>
+  </div>
+
+  <!-- VISÃO 1: Categorias IBGE/POF -->
+  <div id="visao-ibge">
+    <div id="ibgeTotal" style="background:var(--surface);border:1px solid var(--border);padding:20px 24px"></div>
+    <div id="ibgeGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px"></div>
+  </div>
+
+  <!-- VISÃO 2: Fixo / Variável / Futuro -->
+  <div id="visao-blocos" style="display:none">
+    <div id="blocosGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px"></div>
+  </div>
+
+  <!-- VISÃO 3: Comparativo temporal -->
+  <div id="visao-comparativo" style="display:none">
+    <div class="period-bar">
+      <span class="period-label">Período A</span>
+      <div id="cmpABtns"></div>
+      <span style="color:var(--border);margin:0 8px">|</span>
+      <span class="period-label">vs</span>
+      <div id="cmpBBtns"></div>
+    </div>
+    <div class="compare-grid" id="compareGrid"></div>
+    <div class="panel" style="margin-top:20px">
+      <div class="panel-header"><div class="panel-title">Evolução por categoria</div><div class="panel-badge">Barras</div></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartBar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-projecao" style="display:none">
+  <div class="header"><div><div class="page-eyebrow">Planejamento</div><div class="page-title">Projeção <strong>Mensal</strong></div><div class="gold-divider"></div></div></div>
+  <div class="dica-box"><div style="font-size:16px;flex-shrink:0">◎</div><div class="dica-text">Projeção baseada nos seus <strong>custos fixos</strong> + <strong>média dos meses importados</strong> para variáveis. Quanto mais meses, mais precisa.</div></div>
+  <div class="proj-row" id="projRow"></div>
+  <div class="panels-row">
+    <div class="panel"><div class="panel-header"><div class="panel-title">Fixos — Próximo Mês</div><div class="panel-badge">Certo</div></div><div id="projFixos"></div></div>
+    <div class="panel"><div class="panel-header"><div class="panel-title">Variáveis — Estimativa</div><div class="panel-badge">Média histórica</div></div><div id="projVariaveis"></div></div>
+  </div>
+</div>
+
+<div id="tab-transactions" style="display:none">
+  <div class="header">
+    <div><div class="page-eyebrow">Histórico</div><div class="page-title">Todas as <strong>Transações</strong></div><div class="gold-divider"></div></div>
+    <div class="header-right"><button class="btn btn-sm" onclick="clearAll()">✕ Limpar tudo</button></div>
+  </div>
+  <div class="period-bar" id="txnPeriodBar"><span class="period-label">Filtrar</span></div>
+  <div class="panel"><div id="allTxns"></div></div>
+</div>
+
+<div id="tab-upload" style="display:none">
+  <div class="header"><div><div class="page-eyebrow">Importação</div><div class="page-title">Importar <strong>Fatura</strong></div><div class="gold-divider"></div></div></div>
+  <div class="dica-box"><div style="font-size:16px;flex-shrink:0">✦</div><div class="dica-text"><strong>Fluxo recomendado:</strong> envie a fatura ao Claude.ai para análise → importe o CSV gerado aqui. Ou faça upload direto do Excel/CSV do cartão.</div></div>
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">Upload do Arquivo</div><div class="panel-badge">CSV · XLSX · XLS · TXT</div></div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="handleDrag(event)" ondrop="handleDrop(event)">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Arraste sua fatura aqui</div>
+      <div class="upload-sub">CSV do cartão, Excel ou texto colado</div>
+      <button class="btn">Selecionar Arquivo</button>
+    </div>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" onchange="handleFile(event)">
+    <div class="preview-wrap" id="excelPreview" style="display:none">
+      <div class="preview-head">
+        <div><div class="preview-title" id="previewTitle">—</div><div style="font-size:10px;color:var(--muted)" id="previewSub">—</div></div>
+        <button class="btn btn-sm" onclick="confirmExcel()">Importar →</button>
+      </div>
+      <div class="col-select-wrap" id="colSelectWrap"></div>
+      <div class="preview-tbl-wrap"><table class="preview-tbl" id="previewTable"></table></div>
+      <div class="preview-foot"><span style="font-size:10px;color:var(--muted)" id="previewInfo"></span></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-orcamento" style="display:none">
+  <div class="header"><div><div class="page-eyebrow">Planejamento</div><div class="page-title">Meu <strong>Orçamento</strong></div><div class="gold-divider"></div></div></div>
+  <div class="panel"><div class="panel-header"><div class="panel-title">Custos Fixos</div><div class="panel-badge">Mensal</div></div><div id="orcFixosList"></div></div>
+  <div class="panel"><div class="panel-header"><div class="panel-title">Variáveis Estimados</div><div class="panel-badge">Limite mensal</div></div><div id="orcVarList"></div></div>
+  <div class="panel"><div class="panel-header"><div class="panel-title">Metas</div><div class="panel-badge">Mensal</div></div><div id="orcMetasList"></div></div>
+  <div class="panel"><div class="panel-header"><div class="panel-title">Resumo</div><div class="panel-badge" id="orcResumoBadge">Renda configurável</div></div><div id="orcResumo"></div></div>
+</div>
+
+</main>
+</div>
+
+<div class="modal-overlay" id="sheetsModal">
+  <div class="modal">
+    <div class="modal-eyebrow">Integração</div><div class="modal-title">Google Sheets</div><div class="modal-divider"></div>
+    <div class="modal-sub">Exporte seus dados como CSV para o Google Sheets.</div>
+    <div class="modal-steps">
+      <div class="modal-step"><div class="step-num">1</div><div class="step-text">Acesse <strong>sheets.new</strong> e crie uma planilha em branco.</div></div>
+      <div class="modal-step"><div class="step-num">2</div><div class="step-text">Clique em confirmar — o CSV será baixado automaticamente.</div></div>
+      <div class="modal-step"><div class="step-num">3</div><div class="step-text">No Sheets: <strong>Arquivo → Importar</strong> e selecione o CSV.</div></div>
+    </div>
+    <input type="text" class="modal-input" id="sheetsUrl" placeholder="Cole o link da sua planilha (opcional)">
+    <div class="modal-actions"><button class="modal-cancel" onclick="closeSheetsModal()">Cancelar</button><button class="modal-confirm" onclick="connectSheets()">Exportar CSV</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <div class="modal-eyebrow">Editar Categoria</div><div class="modal-title" id="catModalDesc" style="font-size:15px;line-height:1.3">—</div><div class="modal-divider"></div>
+    <div class="cat-select-list" id="catSelectList"></div>
+    <div class="modal-actions"><button class="modal-cancel" onclick="closeCatModal()">Cancelar</button><button class="modal-confirm" onclick="saveCatEdit()">Confirmar</button></div>
+  </div>
+</div>
+
+<div class="notif" id="notif"><div class="notif-title" id="notifTitle"></div><div class="notif-msg" id="notifMsg"></div></div>
+
+<script>
+// Schema versao - preserva dados
+// ── CONFIGURACAO NOTION ───────────────────────────────────────────────────────
+// Token configurado como variavel de ambiente no Netlify (NOTION_TOKEN)
+
+var SCHEMA_VER='v7-categorias-ibge';
+if(localStorage.getItem('fo_schema')!==SCHEMA_VER){
+  localStorage.removeItem('fo_txns');
+  localStorage.setItem('fo_schema',SCHEMA_VER);
+}
+var transactions=JSON.parse(localStorage.getItem('fo_txns')||'[]');
+var sheetsUrl=localStorage.getItem('fo_sheets')||'';
+var RENDA=parseInt(localStorage.getItem('fo_renda')||'5500');
+var LAZER_LIMIT=parseInt(localStorage.getItem('fo_lazer')||'741');
+var VIAGEM=parseInt(localStorage.getItem('fo_viagem')||'500');
+
+// Busca transacoes via Netlify Function (evita bloqueio CORS)
+async function loadFromNotion(){
+  try{
+    var resp=await fetch('/.netlify/functions/notion');
+    if(!resp.ok) return;
+    var data=await resp.json();
+    if(!data.transactions||!data.transactions.length) return;
+    var loaded=data.transactions;
+    transactions=loaded.map(function(t){
+      return {
+        id:t.id,
+        date:t.date?t.date.split('-').reverse().join('/'):todayStr(),
+        month:t.month||'',
+        description:t.description,
+        amount:t.amount,
+        category:t.category,
+        type:'debit'
+      };
+    });
+    save();
+    var ms=getMonths();
+    currentPeriod=ms.length?ms[ms.length-1]:'all';
+    renderDashboard();
+    showNotif('Notion',transactions.length+' transacoes carregadas!');
+  }catch(e){
+    console.log('Notion offline, usando dados locais');
+  }
+}
+var currentPeriod='all',txnFilter='all',cmpA='',cmpB='';
+var editingId=null,selectedCat=null;
+var pieChart=null,barChart=null;
+var excelRows=[],excelHeaders=[],colMap={date:null,description:null,amount:null};
+
+var CATEGORIES=['Alimentacao','Lazer','Transporte','Saude','Seguros','Servicos','Assinaturas','Investimentos','Outros'];
+var COLORS=['#c9a96e','#6a9e78','#5a8fa8','#7f6f9a','#c0634a','#8a6840','#8a8070'];
+
+var ORCAMENTO={
+  fixos:[
+    {label:'Parcela do carro',    val:1270.44},
+    {label:'Plano de saude',      val:500.00},
+    {label:'TotalPass (academia)',val:139.90},
+    {label:'Gasolina',            val:500.00},
+    {label:'Seguro do carro',     val:289.45},
+    {label:'Cuidados pessoais',   val:100.00},
+    {label:'Assinaturas digitais',val:79.90},
+    {label:'Claude Pro',          val:120.00},
+  ],
+  metas:[{label:'Poupanca mensal',val:1000},{label:'Reserva viagens',val:500}],
+  salario:5500,lazer:741
+};
+
+var ORC_CATS={
+  'Parcela do carro':   {budget:1270.44, cat:'fixo',   color:'#5a8fa8'},
+  'Plano de saúde':     {budget:1000.00, cat:'fixo',   color:'#5a8fa8'},
+  'Seguro do carro':    {budget:289.45,  cat:'fixo',   color:'#5a8fa8'},
+  'Assinaturas':        {budget:79.90,   cat:'fixo',   color:'#5a8fa8'},
+  'Claude Pro':         {budget:120.00,  cat:'fixo',   color:'#5a8fa8'},
+  'Poupança':           {budget:1000.00, cat:'meta',   color:'#6a9e78'},
+  'Viagens':            {budget:500.00,  cat:'meta',   color:'#6a9e78'},
+  'Alimentacao':{budget:LAZER_LIMIT,  cat:'variavel',color:'#c9a96e'},
+  'Transporte':         {budget:500.00,  cat:'variavel',color:'#c9a96e'},
+  'Saúde':              {budget:200.00,  cat:'variavel',color:'#c9a96e'},
+};
+
+var KEYWORDS={
+  'Alimentacao':['ifd','ifood','rappi','restaurante','lanchonete','padaria','sushi','acai','starbucks','churrasco','burguer','burger','espeto','goa lounge','pao de acucar','emporio','churrascaria','cappta','fast food','butters','jasmim','cafe','zamp','benicocoe','thebestburguer','alex pereira','convenien','srmercado','mirante do golf','bandeirante','jeuildo','arcos dourados','companhia brasilei','shoga','tcs restaurante'],
+  'Lazer':['bar do mineiro','bar benzoni','art house','duoticket','cinema','teatro','ingresso','show','evento','museu','parque','cupim','boteco','zig '],
+  'Assinaturas':['dl*google','google inner','google one','apple.com','netflix','spotify','disney','hbo','youtube premium','amazon prime','claude'],
+  'Seguros':['seguro','justos'],
+  'Servicos':['sandra','roselidepaula','cobranca','yukari','velotax','pg *velotax'],
+  'Investimentos':['xp','rico','btg','nuinvest','tesouro','cdb']
+};
+
+var MANUAL_CAT={'TCHELOACESSORIOS':'Transporte','JEUILDODOSSANTOS':'Alimentacao','PG *VELOTAX SERVI':'Servicos','SANDRA R COBRANCAS':'Alimentacao','TOTALPASS':'Saude','58549514YUKARI':'Outros','PGS FAST FOOD LTD':'Alimentacao','THE BUTTERS COMER':'Alimentacao','JASMIMCAFEE':'Alimentacao','CAPPTA *CHURRASCARIA N':'Alimentacao','CUPIM P. BOTECO':'Lazer','ZIG    *GOA LOUNGE':'Alimentacao','ZIG*GOA LOUNGE':'Alimentacao','BAR DO MINEIRO':'Lazer','ZIG    *BAR BENZONI':'Lazer','DUOTICKETLTDA':'Lazer','ZIG    *ART HOUSE':'Lazer','DL*GOOGLE INNER':'Assinaturas','DL*GOOGLE':'Assinaturas'};
+
+var MAR26=[{"date":"01/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":7.5},{"date":"01/03/2026","description":"AUTO POSTO VILA SETE A","category":"Transporte","amount":60},{"date":"01/03/2026","description":"58549514YUKARI","category":"Outros","amount":78.8},{"date":"02/03/2026","description":"MIRANTE DO GOLF CONV","category":"Alimentacao","amount":65.91},{"date":"03/03/2026","description":"DL*GOOGLE INNER","category":"Assinaturas","amount":79.9},{"date":"03/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":22},{"date":"04/03/2026","description":"BANDEIRANTES CONVENIEN","category":"Alimentacao","amount":148.98},{"date":"04/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":6},{"date":"04/03/2026","description":"IFD*TCS RESTAURANTE LTDA","category":"Alimentacao","amount":53.95},{"date":"05/03/2026","description":"POSTOFIUZZAMATRIZ","category":"Transporte","amount":50},{"date":"05/03/2026","description":"POSTO FIUZZA","category":"Transporte","amount":68.96},{"date":"05/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":5},{"date":"06/03/2026","description":"IFD*SHOGA HOLL RESTAURANT","category":"Alimentacao","amount":66.89},{"date":"06/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":12.36},{"date":"07/03/2026","description":"BENICOCOEGARAPA","category":"Alimentacao","amount":18},{"date":"07/03/2026","description":"PAO DE ACUCAR-0003","category":"Alimentacao","amount":243.13},{"date":"07/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":11.99},{"date":"08/03/2026","description":"ZIG*GOA LOUNGE","category":"Alimentacao","amount":147.8},{"date":"09/03/2026","description":"IFD*IFOOD","category":"Alimentacao","amount":12.9},{"date":"09/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":16.5},{"date":"09/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":13},{"date":"09/03/2026","description":"ROSELIDEPAULA","category":"Servicos","amount":55},{"date":"09/03/2026","description":"POSTO POTENCIA II","category":"Transporte","amount":20},{"date":"10/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":7.06},{"date":"12/03/2026","description":"POSTO MIRANTE DO GOLF","category":"Transporte","amount":269.21},{"date":"12/03/2026","description":"THEBESTBURGUER","category":"Alimentacao","amount":12},{"date":"12/03/2026","description":"THEBESTBURGUER","category":"Alimentacao","amount":24},{"date":"12/03/2026","description":"JUSTOS SEGUROS","category":"Seguros","amount":289.45},{"date":"12/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":5},{"date":"12/03/2026","description":"58549514YUKARI","category":"Outros","amount":69.8},{"date":"13/03/2026","description":"SANDRA R COBRANCAS","category":"Alimentacao","amount":90},{"date":"13/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":7.5},{"date":"13/03/2026","description":"ESPETO DO RUBAO","category":"Alimentacao","amount":70.4},{"date":"14/03/2026","description":"IFD*SOUZA E SOUZA SUSHI B","category":"Alimentacao","amount":75.31},{"date":"14/03/2026","description":"EMPORIO SANTA ANGELA LT","category":"Alimentacao","amount":122.32},{"date":"14/03/2026","description":"POINT SP330","category":"Transporte","amount":20},{"date":"14/03/2026","description":"EMPORIO SANTA ANGELA LT","category":"Alimentacao","amount":15.29},{"date":"14/03/2026","description":"POINT SP330","category":"Transporte","amount":37.99},{"date":"15/03/2026","description":"PAO DE ACUCAR-0003","category":"Alimentacao","amount":281.66},{"date":"15/03/2026","description":"DUOTICKETLTDA","category":"Lazer","amount":22},{"date":"15/03/2026","description":"DUOTICKETLTDA","category":"Lazer","amount":22},{"date":"15/03/2026","description":"IFD*ZAMP S.A.","category":"Alimentacao","amount":65.48},{"date":"15/03/2026","description":"UBER * PENDING","category":"Transporte","amount":15.1},{"date":"15/03/2026","description":"JAMBUBARLTDA","category":"Alimentacao","amount":11.94},{"date":"15/03/2026","description":"DUOTICKETLTDA","category":"Lazer","amount":22},{"date":"15/03/2026","description":"ZIG    *ART HOUSE","category":"Lazer","amount":82.7},{"date":"15/03/2026","description":"UBER * PENDING","category":"Transporte","amount":39.46},{"date":"16/03/2026","description":"CAPPTA *CHURRASCARIA N","category":"Alimentacao","amount":117.14},{"date":"16/03/2026","description":"58549514YUKARI","category":"Outros","amount":69.8},{"date":"16/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":5},{"date":"17/03/2026","description":"CUPIM P. BOTECO","category":"Lazer","amount":66.1},{"date":"17/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":5},{"date":"18/03/2026","description":"PG *VELOTAX SERVI","category":"Servicos","amount":59.9},{"date":"18/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":7},{"date":"18/03/2026","description":"ZIG    *BAR BENZONI","category":"Lazer","amount":52.43},{"date":"19/03/2026","description":"IFD*COMPANHIA BRASILEI","category":"Alimentacao","amount":56.3},{"date":"19/03/2026","description":"IFD*IFOOD","category":"Alimentacao","amount":2},{"date":"20/03/2026","description":"UBER * PENDING","category":"Transporte","amount":8.03},{"date":"20/03/2026","description":"MIRANTE DO GOLF CONV","category":"Alimentacao","amount":153.99},{"date":"20/03/2026","description":"UBER * PENDING","category":"Transporte","amount":24.18},{"date":"21/03/2026","description":"IFD*ZAMP S.A.","category":"Alimentacao","amount":64.96},{"date":"21/03/2026","description":"UBER * PENDING","category":"Transporte","amount":13.55},{"date":"22/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":7.5},{"date":"22/03/2026","description":"TOTALPASS","category":"Saude","amount":139.9},{"date":"23/03/2026","description":"TCHELOACESSORIOS","category":"Transporte","amount":180},{"date":"24/03/2026","description":"ESPETO DO BE","category":"Alimentacao","amount":38},{"date":"24/03/2026","description":"PGS FAST FOOD LTD","category":"Alimentacao","amount":45},{"date":"25/03/2026","description":"THE BUTTERS COMER","category":"Alimentacao","amount":19},{"date":"25/03/2026","description":"JASMIMCAFEE","category":"Alimentacao","amount":65.78},{"date":"26/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":7.5},{"date":"26/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":9},{"date":"27/03/2026","description":"SRMERCADOVIRTUAL","category":"Alimentacao","amount":36.09},{"date":"28/03/2026","description":"ALEX PEREIRA BAR E RES","category":"Alimentacao","amount":20},{"date":"28/03/2026","description":"JEUILDODOSSANTOS","category":"Alimentacao","amount":24},{"date":"28/03/2026","description":"BAR DO MINEIRO","category":"Lazer","amount":22},{"date":"28/03/2026","description":"IFD*ZAMP S.A.","category":"Alimentacao","amount":54.97},{"date":"28/03/2026","description":"POSTO MIRANTE DO GOLF","category":"Transporte","amount":50},{"date":"28/03/2026","description":"IFD*ARCOS DOURADOS COMERC","category":"Alimentacao","amount":60.48}];
+
+function parseMonth(d){if(!d)return '';var p=d.split('/');if(p.length===3)return p[2]+'-'+p[1].padStart(2,'0');return '';}
+function todayStr(){return new Date().toLocaleDateString('pt-BR');}
+function fmt(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function save(){localStorage.setItem('fo_txns',JSON.stringify(transactions));}
+
+function getMonths(){
+  var ms=[...new Set(transactions.map(function(t){return t.month;}).filter(Boolean))].sort();
+  return ms;
+}
+function monthLabel(m){
+  if(!m)return '—';
+  var p=m.split('-');
+  var names=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return names[parseInt(p[1])-1]+' '+p[0];
+}
+function filteredTxns(period){
+  if(period==='all')return transactions;
+  return transactions.filter(function(t){return t.month===period;});
+}
+function byCat(txns){
+  var r={};
+  txns.forEach(function(t){r[t.category]=(r[t.category]||0)+t.amount;});
+  return r;
+}
+function categorize(desc){
+  if(MANUAL_CAT[desc])return MANUAL_CAT[desc];
+  var d=desc.toLowerCase();
+  for(var i=0;i<CATEGORIES.length;i++){
+    var cat=CATEGORIES[i];
+    if(cat==='Outros')continue;
+    var kws=KEYWORDS[cat]||[];
+    if(kws.some(function(kw){return d.indexOf(kw)>=0;}))return cat;
+  }
+  return 'Outros';
+}
+
+function buildPeriodBtns(containerId,active,onChange){
+  var ms=getMonths();
+  var el=document.getElementById(containerId);
+  if(!el)return;
+  var html='<button class="period-btn'+(active==='all'?' active':'')+'" onclick="'+onChange+'(this,\'all\')">Todos</button>';
+  ms.forEach(function(m){
+    html+='<button class="period-btn'+(active===m?' active':'')+'" onclick="'+onChange+'(this,\''+m+'\')">'+monthLabel(m)+'</button>';
+  });
+  el.innerHTML=html;
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('currentDate').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+  // Garante valores nos inputs
+  document.getElementById('rendaInput').value=RENDA;
+  document.getElementById('lazerInput').value=LAZER_LIMIT;
+  document.getElementById('viagemInput').value=VIAGEM;
+  if(sheetsUrl){document.getElementById('sheetsUrl').value=sheetsUrl;setConnected(true);}
+  // Carrega dados iniciais
+  if(!transactions.length){
+    MAR26.forEach(function(t){
+      var date=t.date.replace(/\/02\/2026$/,'/03/2026');
+      transactions.push({id:Date.now()+Math.random(),date:date,month:'2026-03',description:t.description,amount:t.amount,category:t.category,type:'debit'});
+    });
+    save();
+  }
+  var ms=getMonths();
+  currentPeriod=ms.length?ms[ms.length-1]:'all';
+  cmpA=ms.length?ms[ms.length-1]:'';
+  cmpB=ms.length>1?ms[ms.length-2]:'avg';
+  switchTab('dashboard');
+  renderOrcamento();
+  loadFromNotion();  // busca dados do Notion automaticamente
+});
+
+function saveConfig(){
+  RENDA=Math.max(0,parseInt(document.getElementById('rendaInput').value)||5500);
+  LAZER_LIMIT=Math.max(0,parseInt(document.getElementById('lazerInput').value)||741);
+  VIAGEM=Math.max(0,parseInt(document.getElementById('viagemInput').value)||500);
+  localStorage.setItem('fo_renda',RENDA);
+  localStorage.setItem('fo_lazer',LAZER_LIMIT);
+  localStorage.setItem('fo_viagem',VIAGEM);
+  renderDashboard();
+}
+
+function switchTab(tab){
+  ['dashboard','historico','projecao','transactions','upload','orcamento'].forEach(function(t){
+    var el=document.getElementById('tab-'+t);
+    el.style.display=t===tab?'flex':'none';
+    if(t===tab){el.style.flexDirection='column';el.style.gap='20px';}
+  });
+  document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active');});
+  var map={dashboard:0,historico:1,projecao:2,transactions:3,upload:4,orcamento:5};
+  if(map[tab]!==undefined)document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
+  if(tab==='dashboard')renderDashboard();
+  if(tab==='historico')renderHistorico();
+  if(tab==='projecao')renderProjecao();
+  if(tab==='transactions')renderAllTxns();
+}
+
+function setPeriod(btn,period){
+  currentPeriod=period;
+  document.querySelectorAll('#dashPeriodBar .period-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderDashboard();
+}
+function setTxnFilter(btn,period){
+  txnFilter=period;
+  document.querySelectorAll('#txnPeriodBar .period-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderAllTxns();
+}
+function setCmpA(btn,p){
+  cmpA=p;
+  document.querySelectorAll('#cmpABtns .period-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderHistorico();
+}
+function setCmpB(btn,p){
+  cmpB=p;
+  document.querySelectorAll('#cmpBBtns .period-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderHistorico();
+}
+
+function renderDashboard(){
+  buildPeriodBtns('dashPeriodBar',currentPeriod,'setPeriod');
+  var txns=filteredTxns(currentPeriod);
+  var total=txns.reduce(function(s,t){return s+t.amount;},0);
+  var cats=byCat(txns);
+  var sorted=Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
+
+  // ── CARDS ──────────────────────────────────────────────────────────────────
+  var segReal=cats['Seguros']||289.45;
+  var alimentacaoReal=cats['Alimentacao']||0;
+  var lazerPuroReal=cats['Lazer']||0;
+  var lazerReal=alimentacaoReal+lazerPuroReal;  // total variavel = alimentacao + lazer
+  var transpTotal=1270.44+500+segReal;
+  var totalFixo=transpTotal+500.00+79.90+120.00+100+139.90;
+  var totalVar=lazerReal;
+  var lazerPct=LAZER_LIMIT>0?Math.round(lazerReal/LAZER_LIMIT*100):0;
+  var totalComprometido=totalFixo+totalVar+VIAGEM;
+  var saldo=RENDA-totalComprometido;
+  var positivo=saldo>=0;
+  // Poupanca = residuo real
+  var poupanca=RENDA-totalFixo-lazerReal-VIAGEM;
+
+  document.getElementById('statFixo').textContent=fmt(totalFixo);
+  document.getElementById('statFixoSub').textContent='transporte + saude + TotalPass + cuidados + assinaturas';
+
+  // Total Variaveis: mostra Alimentacao + Lazer com breakdown
+  document.getElementById('statVar').textContent=fmt(totalVar);
+  document.getElementById('statVar').className='stat-value'+(lazerReal>LAZER_LIMIT?' red':'');
+  document.getElementById('statVarSub').textContent=
+    'Alim. '+fmt(alimentacaoReal)+' · Lazer '+fmt(lazerPuroReal)+
+    (lazerReal>LAZER_LIMIT?' — acima':'');
+
+  document.getElementById('statViagem').textContent=fmt(VIAGEM);
+  document.getElementById('statViagemSub').textContent='reserva separada este mes';
+
+  var saldoSign=(positivo?'+':'-')+' R$ '+Math.abs(saldo).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('statSaldo').textContent=saldoSign;
+  document.getElementById('statSaldo').className='stat-value'+(positivo?' green':' red');
+  document.getElementById('statSaldoSub').textContent='renda '+fmt(RENDA)+' · comprometido '+fmt(totalComprometido);
+
+  var defEl=document.getElementById('statDeficit');
+  if(defEl){
+    defEl.style.display='block';
+    defEl.style.background=positivo?'rgba(58,100,58,0.18)':'rgba(160,60,60,0.18)';
+    defEl.style.color=positivo?'var(--green)':'var(--red)';
+    defEl.textContent=positivo?'sobrou '+fmt(saldo)+' este mes':'deficit de '+fmt(Math.abs(saldo))+' este mes';
+  }
+
+  // 1) Poupanca real = residuo — atualiza card de configuracao
+  var pEl=document.getElementById('poupancaCalc');
+  var pHEl=document.getElementById('poupancaHint');
+  if(pEl){
+    var pSign=(poupanca>=0?'+ ':' - ')+'R$ '+Math.abs(poupanca).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    pEl.textContent=pSign;
+    pEl.style.color=poupanca>=0?'var(--green)':'var(--red)';
+  }
+  if(pHEl){pHEl.textContent=poupanca>=0?'renda - fixos - variavel - viagem':'deficit: acima da renda';}
+
+  document.getElementById('orcPeriodBadge').textContent=currentPeriod==='all'?'Todos':monthLabel(currentPeriod);
+  // 2) Pie IBGE: azuis=fixo, dourado=variavel, verde=meta
+  var pieData=[
+    {label:'Transporte (fixo)',   val:transpTotal,               color:'#2e5a7a'},
+    {label:'Saude (plano+TP)',    val:500+139.90,               color:'#3d6b8a'},
+    {label:'Cuidados pessoais',   val:100,                       color:'#4a7a9b'},
+    {label:'Assinaturas',         val:79.90,                     color:'#254d6a'},
+    {label:'Claude Pro',          val:120,                       color:'#1c3f5a'},
+    {label:'Poupanca (meta)',      val:1000,                     color:'#5a8f6a'},
+    {label:'Viagens',             val:VIAGEM,                    color:'#4a7a5a'},
+    {label:'Alimentacao',         val:alimentacaoReal||0,        color:'#c9a96e'},
+    {label:'Lazer puro',          val:lazerPuroReal||0,          color:'#a07850'},
+    {label:'Servicos',            val:cats['Servicos']||0,       color:'#c0634a'},
+  ].filter(function(d){return d.val>0;});
+  if(pieChart){pieChart.destroy();pieChart=null;}
+  var ctx=document.getElementById('chartPie').getContext('2d');
+  if(pieData.length){
+    pieChart=new Chart(ctx,{type:'doughnut',
+      data:{labels:pieData.map(function(e){return e.label;}),datasets:[{data:pieData.map(function(e){return e.val;}),
+        backgroundColor:pieData.map(function(e){return e.color+'cc';}),
+        borderColor:pieData.map(function(e){return e.color;}),borderWidth:1,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'right',labels:{color:'#8a8070',font:{family:'Montserrat',size:10},boxWidth:8,padding:8}}},
+        cutout:'68%'}});
+  }
+  // Orcamento vs Realizado — 5) Transporte inclui parcela+gas+seguro
+  var orcEl=document.getElementById('orcList');orcEl.innerHTML='';
+  var colorMap={fixo:'#5a8fa8',meta:'#6a9e78',variavel:'#c9a96e'};
+  var sections=[
+    {label:'FIXOS',items:[
+      {name:'Transporte (parcela+gas+seg)', budget:1270.44+500+289.45, real:transpTotal, tipo:'fixo'},
+      {name:'Plano de saude',   budget:500,        real:500,       tipo:'fixo'},
+      {name:'Cuidados pessoais',budget:100,         real:100,       tipo:'fixo'},
+      {name:'TotalPass (academia)',budget:139.90,      real:139.90,    tipo:'fixo'},
+      {name:'Assinaturas',      budget:79.90,       real:79.90,     tipo:'fixo'},
+      {name:'Claude Pro',       budget:120,         real:120,       tipo:'fixo'},
+    ]},
+    {label:'METAS',items:[
+      {name:'Poupanca',budget:1000,       real:1000,  tipo:'meta'},
+      {name:'Viagens', budget:VIAGEM,     real:VIAGEM,tipo:'meta'},
+    ]},
+    {label:'VARIAVEIS',items:[
+      {name:'Alimentacao & Lazer',budget:LAZER_LIMIT,real:lazerReal,             tipo:'variavel'},
+      {name:'  - Alimentacao',    budget:LAZER_LIMIT*0.85,real:alimentacaoReal,  tipo:'variavel'},
+      {name:'  - Lazer puro',     budget:LAZER_LIMIT*0.15,real:lazerPuroReal,    tipo:'variavel'},
+
+    ]},
+  ];
+  sections.forEach(function(sec){
+    orcEl.innerHTML+='<div style="font-size:9px;color:var(--gold-dim);letter-spacing:2px;font-weight:600;margin:10px 0 8px">'+sec.label+'</div>';
+    sec.items.forEach(function(item){
+      var color=colorMap[item.tipo];
+      var pct=Math.min(150,(item.real/item.budget*100));
+      var over=item.tipo==='variavel'&&item.real>item.budget;
+      orcEl.innerHTML+='<div class="orc-item" style="margin-bottom:10px"><div class="orc-top"><div class="orc-name"><div class="orc-dot" style="background:'+color+'"></div>'+item.name+'</div><div class="orc-vals">'+fmt(item.real)+' / '+fmt(item.budget)+'</div></div><div class="orc-bar"><div class="orc-fill" style="width:'+pct+'%;background:'+(over?'var(--red)':color)+'"></div></div></div>';
+    });
+  });
+  // 4) Tabela Price
+  var priceEl=document.getElementById('pricePanel');
+  if(priceEl){
+    var PV=43000,taxa=0.00327,n=36,parcela=1270.44;
+    var inicio=new Date(2026,2,1);  // marco 2026 = mes anterior a abril/2026 (1a parcela)
+    var hoje=new Date();
+    var rows='';var saldoDev=PV;var saldoAtual=PV;var pagas=0;var totalJuros=0;
+    for(var i=1;i<=n;i++){
+      var juros=saldoDev*taxa;var amort=parcela-juros;saldoDev-=amort;
+      var dtP=new Date(inicio.getFullYear(),inicio.getMonth()+i,10);
+      var paga=dtP<=hoje;
+      if(paga){pagas++;totalJuros+=juros;saldoAtual=Math.max(0,saldoDev);}
+      var mostrar=i<=2||i===pagas||i===pagas+1||i===pagas+2||i>=n-1;
+      if(mostrar){
+        var bg=paga?'rgba(58,100,58,0.10)':i===pagas+1?'rgba(180,140,40,0.12)':'';
+        var sc=paga?'var(--green)':i===pagas+1?'var(--gold)':'var(--muted)';
+        var st=paga?'Paga':i===pagas+1?'PROXIMA':'Pendente';
+        rows+='<tr style="background:'+bg+'"><td style="color:var(--muted);font-size:11px;font-family:DM Mono,monospace">'+i+'/'+n+'</td><td style="font-size:11px">'+dtP.toLocaleDateString('pt-BR',{month:'short',year:'numeric'})+'</td><td style="color:var(--gold);font-size:11px;font-family:DM Mono,monospace">'+fmt(parcela)+'</td><td style="font-size:11px;font-family:DM Mono,monospace">'+fmt(juros)+'</td><td style="font-size:11px;font-family:DM Mono,monospace">'+fmt(amort)+'</td><td style="font-size:11px;font-family:DM Mono,monospace">'+fmt(Math.max(0,saldoDev))+'</td><td style="font-size:10px;color:'+sc+';font-weight:600">'+st+'</td></tr>';
+        if(i===2&&pagas>2) rows+='<tr><td colspan="7" style="text-align:center;color:var(--muted);font-size:10px;padding:6px">...</td></tr>';
+      }
+    }
+    var pct36=Math.round(pagas/n*100);
+    priceEl.innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:16px">'+
+      '<div style="background:var(--surface);padding:14px 16px"><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">PARCELAS PAGAS</div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:600;color:var(--green)">'+pagas+' de '+n+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+pct36+'% quitado</div></div>'+
+      '<div style="background:var(--surface);padding:14px 16px"><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">PARCELA MENSAL</div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:600;color:var(--gold)">'+fmt(parcela)+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">fixa - sistema Price</div></div>'+
+      '<div style="background:var(--surface);padding:14px 16px"><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">JUROS PAGOS</div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:600;color:var(--red)">'+fmt(totalJuros)+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">custo real do credito</div></div>'+
+      '<div style="background:var(--surface);padding:14px 16px"><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">SALDO DEVEDOR</div><div style="font-family:Cormorant Garamond,serif;font-size:24px;font-weight:600;color:var(--gold)">'+fmt(saldoAtual)+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+(n-pagas)+' parcelas restantes</div></div>'+
+    '</div>'+
+    '<div style="height:6px;background:var(--border);border-radius:3px;margin-bottom:16px"><div style="width:'+pct36+'%;height:100%;background:var(--green);border-radius:3px"></div></div>'+
+    '<div style="overflow-x:auto"><table class="txn-table"><thead><tr><th>#</th><th>Mes</th><th>Parcela</th><th>Juros</th><th>Amort.</th><th>Saldo</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  // ── BARRA DE RENDA ─────────────────────────────────────────────────────────
+  var pF=Math.round(totalFixo/RENDA*100);
+  var pV=Math.round(totalVar/RENDA*100);
+  var pM=Math.round(VIAGEM/RENDA*100);
+  var pLReal=100-pF-pV-pM;
+  var pL=Math.max(0,pLReal);
+  var margemSinal=(pLReal>=0?'+':'-')+Math.abs(pLReal)+'%';
+  var margemCor=pLReal>=0?'var(--muted)':'var(--red)';
+  document.getElementById('rendaBar').innerHTML=
+    '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:5px">'+
+    '<div style="width:'+Math.min(pF,100)+'%;background:#3d6b8a"></div>'+
+    '<div style="width:'+Math.min(pV,100-Math.min(pF,100))+'%;background:#7a6040"></div>'+
+    '<div style="width:'+Math.min(pM,Math.max(0,100-pF-pV))+'%;background:#3d6b45"></div>'+
+    '<div style="width:'+pL+'%;background:var(--surface)"></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:14px;font-size:10px;color:var(--muted)">'+
+    '<span><span style="display:inline-block;width:8px;height:8px;background:#3d6b8a;border-radius:1px;margin-right:4px"></span>Fixos '+pF+'%</span>'+
+    '<span><span style="display:inline-block;width:8px;height:8px;background:#7a6040;border-radius:1px;margin-right:4px"></span>Variaveis '+pV+'%</span>'+
+    '<span><span style="display:inline-block;width:8px;height:8px;background:#3d6b45;border-radius:1px;margin-right:4px"></span>Metas '+pM+'%</span>'+
+    '<span style="color:'+margemCor+'"><span style="display:inline-block;width:8px;height:8px;background:var(--border);border-radius:1px;margin-right:4px"></span>Margem livre '+margemSinal+'</span>'+
+    '</div>';
+
+  // ── GRID IBGE — valores reais da fatura + fixos corretos ───────────────────
+  // Transporte: gasolina real da fatura + seguro real + parcela fixa
+  var gasReal=cats['Transporte']||0;  // gasolina+uber+postos da fatura
+  var seguro=cats['Seguros']||289.45;
+  var transpIBGE=1270.44+gasReal+seguro;  // parcela+fatura transporte+seguro
+
+  // Saude: plano fixo + TotalPass fixo (sem variavel)
+  var saudeIBGE=500+139.90;
+
+  // Lazer & cultura: assinaturas fixas (Google ja eh Assinaturas, so Claude+outros)
+  var assinaturasReal=cats['Assinaturas']||0;  // Google One da fatura
+  var lazerCulturaIBGE=120+79.90+assinaturasReal;  // Claude+assinaturas digitais+real
+
+  // Poupanca: meta configuravel
+  var poupancaIBGE=VIAGEM+Math.max(0,poupanca);  // viagem + poupanca real do mes
+
+  var ibgeDash=[
+    {titulo:'Habitacao',         real:0,                           cor:'#5a8fa8', tipo:'fixo',     sub:'mora com o pai'},
+    {titulo:'Alimentacao',       real:alimentacaoReal,             cor:'#c9a96e', tipo:'variavel', sub:alimentacaoReal>0?'fatura real':'sem lancamentos'},
+    {titulo:'Lazer puro',        real:lazerPuroReal,               cor:'#a07850', tipo:'variavel', sub:lazerPuroReal>0?'bares + eventos':'sem lancamentos'},
+    {titulo:'Transporte',        real:transpIBGE,                  cor:'#4a7a9b', tipo:'fixo',     sub:'parcela+gas+seguro'},
+    {titulo:'Saude',             real:saudeIBGE,                   cor:'#6a9e78', tipo:'fixo',     sub:'plano+TotalPass'},
+    {titulo:'Vestuario',         real:cats['Vestuario']||0,        cor:'#7f6f9a', tipo:'variavel', sub:'sem lancamentos'},
+    {titulo:'Lazer & cultura',   real:lazerCulturaIBGE,            cor:'#b08040', tipo:'fixo',     sub:'assinaturas+Claude'},
+    {titulo:'Educacao',          real:cats['Educacao']||0,         cor:'#854F0B', tipo:'variavel', sub:'sem lancamentos'},
+    {titulo:'Cuidados pessoais', real:100,                         cor:'#d4537e', tipo:'fixo',     sub:'barbearia'},
+    {titulo:'Poupanca & futuro', real:poupancaIBGE,                cor:'#3B6D11', tipo:'meta',     sub:'viagem+residuo'},
+  ];
+  var tipoCores={fixo:'#5a8fa8',variavel:'#c9a96e',misto:'#8a7060',meta:'#6a9e78'};
+  document.getElementById('ibgeDashBadge').textContent=monthLabel(currentPeriod==='all'?getMonths().slice(-1)[0]||'':currentPeriod)||'Mar 2026';
+  document.getElementById('ibgeDashGrid').innerHTML=ibgeDash.map(function(c){
+    var pct=Math.round(c.real/RENDA*100);
+    var tc=tipoCores[c.tipo]||'#8a8070';
+    return '<div style="background:var(--surface);padding:14px 16px;border-top:2px solid '+c.cor+'">'+
+      '<div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between">'+
+        '<span>'+c.titulo+'</span>'+
+        '<span style="color:'+tc+'">'+c.tipo+'</span>'+
+      '</div>'+
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:600;color:'+c.cor+';line-height:1;margin-bottom:4px">'+fmt(c.real)+'</div>'+
+      '<div style="height:2px;background:var(--border);border-radius:1px;margin-bottom:4px">'+
+        '<div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+c.cor+'"></div>'+
+      '</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">'+
+        '<span>'+c.sub+'</span>'+
+        '<span>'+pct+'% renda</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+var visaoAtual='ibge';
+function setVisao(v,btn){
+  visaoAtual=v;
+  ['ibge','blocos','comparativo'].forEach(function(x){
+    var el=document.getElementById('visao-'+x);
+    if(el){el.style.display=x===v?'block':'none';}
+  });
+  document.querySelectorAll('#vBtn1,#vBtn2,#vBtn3').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderHistorico();
+}
+
+// Categorias IBGE/POF mapeadas para a realidade do Leonardo
+var IBGE_CATS=[
+  {
+    id:'habitacao', titulo:'Habitação', cor:'#5a8fa8', tipo:'fixo',
+    nota:'Mora com o pai — custo zero',
+    ibge:'Aluguel, condomínio, IPTU, manutenção',
+    itens:[], totalFixo:0, totalVar:0
+  },
+  {
+    id:'alimentacao', titulo:'Alimentação fora', cor:'#c9a96e', tipo:'variavel',
+    nota:'Restaurantes, bares, delivery',
+    ibge:'Alimentação fora do domicílio (IBGE POF)',
+    catKey:'Alimentacao'
+  },
+  {
+    id:'transporte', titulo:'Transporte', cor:'#4a7a9b', tipo:'fixo',
+    nota:'Parcela + gasolina + seguro + manutenção',
+    ibge:'Transporte pessoal e coletivo (IBGE POF)',
+    itens:[{n:'Parcela do carro',v:1270.44},{n:'Gasolina',v:500},{n:'Seguro',v:289.45}]
+  },
+  {
+    id:'saude', titulo:'Saúde & bem-estar', cor:'#6a9e78', tipo:'misto',
+    nota:'Plano fixo + gastos variáveis de saúde',
+    ibge:'Assistência à saúde (IBGE POF)',
+    fixoItens:[{n:'Plano de saúde',v:1000},{n:'TotalPass',v:139.90}],
+    catKey:'Saúde'
+  },
+  {
+    id:'vestuario', titulo:'Vestuário', cor:'#7f6f9a', tipo:'variavel',
+    nota:'Roupas, calçados, acessórios',
+    ibge:'Vestuário (IBGE POF)',
+    itens:[]
+  },
+  {
+    id:'lazer', titulo:'Lazer & cultura', cor:'#a07850', tipo:'variavel',
+    nota:'Entretenimento, assinaturas, shows',
+    ibge:'Recreação e cultura (IBGE POF)',
+    itens:[{n:'Assinaturas digitais',v:79.90},{n:'Claude Pro',v:120}]
+  },
+  {
+    id:'cuidados', titulo:'Cuidados pessoais', cor:'#d4537e', tipo:'fixo',
+    nota:'Barbearia, higiene, estética',
+    ibge:'Higiene e cuidados pessoais (IBGE POF)',
+    itens:[]
+  },
+  {
+    id:'educacao', titulo:'Educação', cor:'#854F0B', tipo:'variavel',
+    nota:'Cursos, livros, desenvolvimento',
+    ibge:'Educação (IBGE POF)',
+    itens:[]
+  },
+  {
+    id:'futuro', titulo:'Poupança & investimentos', cor:'#3B6D11', tipo:'meta',
+    nota:'Reserva mensal + viagens',
+    ibge:'Não categorizado no IBGE (POF não inclui poupança)',
+    itens:[{n:'Poupança mensal',v:1000},{n:'Reserva viagens',v:500}]
+  }
+];
+
+function renderHistorico(){
+  var ms=getMonths();
+  var periodo=cmpA||ms[ms.length-1]||'all';
+  var cats=byCat(filteredTxns(periodo));
+
+  if(visaoAtual==='ibge')       renderIBGE(cats,periodo);
+  if(visaoAtual==='blocos')     renderBlocos(cats);
+  if(visaoAtual==='comparativo')renderComparativo(ms,cats);
+}
+
+function renderIBGE(cats,periodo){
+  var el=document.getElementById('ibgeGrid');
+  if(!el) return;
+  var renda=RENDA;
+  var totalGasto=0;
+  var cards=IBGE_CATS.map(function(cat){
+    var real=0;
+    if(cat.catKey) real=cats[cat.catKey]||0;
+    if(cat.itens) cat.itens.forEach(function(i){real+=i.v;});
+    if(cat.fixoItens){ cat.fixoItens.forEach(function(i){real+=i.v;}); real+=(cats[cat.catKey2]||0); }
+    if(cat.id==='saude') real=(cats['Saude']||0)+1000+139.90;
+    totalGasto+=real;
+    var pct=Math.round(real/renda*100);
+    var tipoCor={fixo:'#5a8fa8',variavel:'#c9a96e',misto:'#8a7060',meta:'#6a9e78'}[cat.tipo]||'#8a8070';
+    var tipoLabel={fixo:'fixo',variavel:'variável',misto:'misto',meta:'meta'}[cat.tipo]||cat.tipo;
+    return '<div class="vida-card" style="border-top:2px solid '+cat.cor+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:15px;font-weight:600">'+cat.titulo+'</div>'+
+        '<span style="font-size:9px;padding:2px 8px;border:1px solid '+tipoCor+'44;color:'+tipoCor+';letter-spacing:1px;text-transform:uppercase">'+tipoLabel+'</span>'+
+      '</div>'+
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:28px;font-weight:600;color:'+cat.cor+';line-height:1;margin-bottom:6px">'+fmt(real)+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-bottom:10px">'+pct+'% da renda</div>'+
+      '<div style="height:2px;background:var(--border);border-radius:1px;margin-bottom:10px"><div style="width:'+Math.min(pct,100)+'%;height:100%;background:'+cat.cor+';border-radius:1px"></div></div>'+
+      '<div style="font-size:10px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:8px">'+cat.nota+'</div>'+
+    '</div>';
+  });
+
+  el.innerHTML=cards.join('');
+
+  // Totalizador
+  var totEl=document.getElementById('ibgeTotal');
+  if(totEl){
+    var sobra=renda-totalGasto;
+    totEl.innerHTML=
+      '<div style="display:flex;gap:20px;flex-wrap:wrap">'+
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">RENDA</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:600;color:var(--green)">'+fmt(renda)+'</div></div>'+
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">COMPROMETIDO</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:600;color:var(--gold)">'+fmt(totalGasto)+'</div></div>'+
+      '<div><div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">MARGEM LIVRE</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:24px;font-weight:600;color:'+(sobra>=0?'var(--green)':'var(--red)')+'">'+fmt(Math.abs(sobra))+'</div></div>'+
+      '</div>';
+  }
+}
+
+function renderBlocos(cats){
+  var el=document.getElementById('blocosGrid');
+  if(!el) return;
+  var segReal=cats['Seguros']||289.45;
+  var fixos=[
+    {n:'Parcela do carro',v:1270.44},{n:'Plano de saúde',v:1000},{n:'Gasolina',v:500},
+    {n:'Seguro do carro',v:segReal},{n:'Assinaturas',v:79.90},{n:'Claude Pro',v:120}
+  ];
+  var tFixo=fixos.reduce(function(s,i){return s+i.v;},0);
+  var lazer=((cats['Alimentacao']||0)+(cats['Lazer']||0))||0;
+  var saude=cats['Saude']||0;
+  var tVar=lazer+saude;
+  var tMeta=1500;
+  var renda=RENDA;
+
+  el.innerHTML=
+    '<div style="background:var(--surface);border:1px solid var(--border);padding:20px;border-top:2px solid #5a8fa8">'+
+      '<div style="font-size:9px;color:#5a8fa8;letter-spacing:2px;font-weight:600;margin-bottom:14px">FIXOS · '+Math.round(tFixo/renda*100)+'% da renda</div>'+
+      fixos.map(function(f){return '<div class="vida-row"><span class="vida-label">'+f.n+'</span><span class="vida-val" style="color:#5a8fa8">'+fmt(f.v)+'</span></div>';}).join('')+
+      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;font-weight:600"><span>Total</span><span style="font-family:\'DM Mono\',monospace;color:#5a8fa8">'+fmt(tFixo)+'</span></div>'+
+    '</div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);padding:20px;border-top:2px solid var(--gold)">'+
+      '<div style="font-size:9px;color:var(--gold);letter-spacing:2px;font-weight:600;margin-bottom:14px">VARIÁVEIS · '+Math.round(tVar/renda*100)+'% da renda</div>'+
+      '<div class="vida-row"><span class="vida-label">Lazer & Alimentação</span><span class="vida-val" style="color:var(--gold)">'+fmt(lazer)+'</span></div>'+
+      '<div class="vida-row"><span class="vida-label">Saúde variável</span><span class="vida-val" style="color:var(--gold)">'+fmt(saude)+'</span></div>'+
+      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;font-weight:600"><span>Total</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(tVar)+'</span></div>'+
+    '</div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);padding:20px;border-top:2px solid var(--green)">'+
+      '<div style="font-size:9px;color:var(--green);letter-spacing:2px;font-weight:600;margin-bottom:14px">FUTURO · '+Math.round(tMeta/renda*100)+'% da renda</div>'+
+      '<div class="vida-row"><span class="vida-label">Poupança mensal</span><span class="vida-val" style="color:var(--green)">'+fmt(1000)+'</span></div>'+
+      '<div class="vida-row"><span class="vida-label">Reserva viagens</span><span class="vida-val" style="color:var(--green)">'+fmt(500)+'</span></div>'+
+      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;font-weight:600"><span>Total</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(tMeta)+'</span></div>'+
+    '</div>';
+}
+
+function renderComparativo(ms,catsA){
+  if(!document.getElementById('cmpABtns')) return;
+  var aHtml='<button class="period-btn'+(cmpA==='all'?' active':'')+'" onclick="setCmpA(this,\'all\')">Todos</button>';
+  ms.forEach(function(m){aHtml+='<button class="period-btn'+(cmpA===m?' active':'')+'" onclick="setCmpA(this,\''+m+'\')">'+monthLabel(m)+'</button>';});
+  document.getElementById('cmpABtns').innerHTML=aHtml;
+  var bHtml='<button class="period-btn'+(cmpB==='avg'?' active':'')+'" onclick="setCmpB(this,\'avg\')">Média geral</button>';
+  ms.forEach(function(m){if(m!==cmpA)bHtml+='<button class="period-btn'+(cmpB===m?' active':'')+'" onclick="setCmpB(this,\''+m+'\')">'+monthLabel(m)+'</button>';});
+  document.getElementById('cmpBBtns').innerHTML=bHtml;
+  var nM=Math.max(1,ms.length);
+  var avgCats={};
+  CATEGORIES.forEach(function(c){avgCats[c]=transactions.filter(function(t){return t.category===c;}).reduce(function(s,t){return s+t.amount;},0)/nM;});
+  var catsB=cmpB==='avg'?avgCats:byCat(filteredTxns(cmpB));
+  var lblA=cmpA==='all'?'Todos':monthLabel(cmpA);
+  var lblB=cmpB==='avg'?'Média geral':monthLabel(cmpB);
+  var cats=['Alimentacao','Transporte','Saúde','Seguros','Serviços'];
+  var grid=document.getElementById('compareGrid');
+  if(grid) grid.innerHTML=cats.map(function(c){
+    var a=catsA[c]||0,b=catsB[c]||0,delta=a-b;
+    var ci=CATEGORIES.indexOf(c);
+    var dHtml=ms.length>1?'<div class="cmp-delta '+(delta>0?'delta-up':'delta-down')+'">'+(delta>0?'▲':'▼')+' '+fmt(Math.abs(delta))+'</div>':'<div class="cmp-delta" style="color:var(--muted)">— sem histórico</div>';
+    return '<div class="cmp-cell"><div class="cmp-label">'+c+'</div><div class="cmp-value" style="color:'+COLORS[ci%COLORS.length]+'">'+fmt(a)+'</div>'+dHtml+'</div>';
+  }).join('');
+  if(barChart){barChart.destroy();barChart=null;}
+  var ctx2=document.getElementById('chartBar');
+  if(ctx2) barChart=new Chart(ctx2.getContext('2d'),{type:'bar',data:{labels:cats,datasets:[{label:lblA,data:cats.map(function(c){return catsA[c]||0;}),backgroundColor:cats.map(function(_,i){return COLORS[i%COLORS.length]+'cc';}),borderColor:cats.map(function(_,i){return COLORS[i%COLORS.length];}),borderWidth:1},{label:lblB,data:cats.map(function(c){return catsB[c]||0;}),backgroundColor:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.18)',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#8a8070',font:{family:'Montserrat',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#8a8070',font:{family:'DM Mono',size:10},callback:function(v){return 'R$'+v.toLocaleString('pt-BR');}},grid:{color:'rgba(255,255,255,0.06)'}}},plugins:{legend:{labels:{color:'#8a8070',font:{family:'Montserrat',size:11},boxWidth:10}}}}});
+}
+
+function renderProjecao(){
+  var totalFixo=ORCAMENTO.fixos.reduce(function(s,i){return s+i.val;},0);
+  var totalMetas=ORCAMENTO.metas.reduce(function(s,i){return s+i.val;},0);
+  var ms=getMonths();
+  var nM=Math.max(1,ms.length);
+  var varCats=['Alimentacao','Lazer','Servicos'];
+  var avgVar={};var totalVar=0;
+  varCats.forEach(function(c){var a=transactions.filter(function(t){return t.category===c;}).reduce(function(s,t){return s+t.amount;},0)/nM;avgVar[c]=a;totalVar+=a;});
+  var margem=ORCAMENTO.salario-totalFixo-totalVar-totalMetas;
+  document.getElementById('projRow').innerHTML='<div class="proj-card"><div class="proj-label">Fixos certos</div><div class="proj-value">'+fmt(totalFixo)+'</div><div class="proj-sub">Todo mês sem variação</div></div><div class="proj-card"><div class="proj-label">Variáveis estimados</div><div class="proj-value">'+fmt(totalVar)+'</div><div class="proj-sub">Média de '+nM+' '+(nM===1?'mês':'meses')+' importado'+(nM===1?'':'s')+'</div></div><div class="proj-card"><div class="proj-label">Margem projetada</div><div class="proj-value '+(margem>=0?'green':'red')+'">'+fmt(margem)+'</div><div class="proj-sub">Após fixos, variáveis e metas</div></div>';
+  document.getElementById('projFixos').innerHTML=ORCAMENTO.fixos.map(function(f){return '<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+f.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(f.val)+'</span></div>';}).join('')+'<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(totalFixo)+'</span></div>';
+  document.getElementById('projVariaveis').innerHTML=varCats.map(function(c,i){return '<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;background:'+COLORS[i]+';display:inline-block"></span>'+c+'</span><span style="font-family:\'DM Mono\',monospace;color:'+COLORS[i]+'">'+fmt(avgVar[c])+'</span></div>';}).join('')+'<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total estimado</span><span style="font-family:\'DM Mono\',monospace">'+fmt(totalVar)+'</span></div>';
+}
+
+function renderAllTxns(){
+  buildPeriodBtns('txnPeriodBar',txnFilter,'setTxnFilter');
+  renderTxnTable(document.getElementById('allTxns'),filteredTxns(txnFilter).slice().reverse(),true);
+}
+
+function renderTxnTable(el,txns,showEdit){
+  if(!txns.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">◌</div><p>Nenhuma transação.</p></div>';return;}
+  var rows=txns.map(function(t){
+    var ci=CATEGORIES.indexOf(t.category);var color=COLORS[(ci>=0?ci:7)%COLORS.length];
+    var edit=showEdit?'<button onclick="openCatModal(\''+t.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;padding:2px 6px;margin-left:4px">✎</button>':'';
+    return '<tr><td style="color:var(--muted);font-family:\'DM Mono\',monospace;font-size:11px">'+t.date+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.description+'</td><td><span class="cat-badge" style="background:'+color+'14;color:'+color+';border-color:'+color+'44">'+t.category+'</span>'+edit+'</td><td class="amount-col">'+fmt(t.amount)+'</td></tr>';
+  }).join('');
+  el.innerHTML='<table class="txn-table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function openCatModal(id){
+  editingId=id;selectedCat=null;
+  var t=transactions.find(function(x){return String(x.id)===String(id);});
+  if(!t)return;
+  document.getElementById('catModalDesc').textContent=t.description;
+  document.getElementById('catSelectList').innerHTML=CATEGORIES.map(function(c,i){var color=COLORS[i%COLORS.length];return '<div class="cat-select-item'+(c===t.category?' selected':'')+'" onclick="selCat(\''+c+'\',this)" style="'+(c===t.category?'border-color:'+color+';color:'+color:'')+'"><div style="width:8px;height:8px;background:'+color+';flex-shrink:0"></div>'+c+'</div>';}).join('');
+  selectedCat=t.category;
+  document.getElementById('catModal').classList.add('open');
+}
+function selCat(c,el){selectedCat=c;document.querySelectorAll('.cat-select-item').forEach(function(e){e.classList.remove('selected');});el.classList.add('selected');}
+function saveCatEdit(){if(!editingId||!selectedCat)return;var t=transactions.find(function(x){return String(x.id)===String(editingId);});if(t){t.category=selectedCat;save();renderDashboard();renderAllTxns();showNotif('Categoria atualizada',t.description+' → '+selectedCat);}closeCatModal();}
+function closeCatModal(){document.getElementById('catModal').classList.remove('open');editingId=null;selectedCat=null;}
+
+function renderOrcamento(){
+  // Fixos — inclui TotalPass e cuidados pessoais
+  var fixosOrc=[
+    {label:'Parcela do carro',    val:1270.44},
+    {label:'Plano de saude',      val:500.00},
+    {label:'TotalPass (academia)',val:139.90},
+    {label:'Gasolina',            val:500.00},
+    {label:'Seguro do carro',     val:289.45},
+    {label:'Cuidados pessoais',   val:100.00},
+    {label:'Assinaturas digitais',val:79.90},
+    {label:'Claude Pro',          val:120.00},
+  ];
+  var tf=fixosOrc.reduce(function(s,i){return s+i.val;},0);
+  document.getElementById('orcFixosList').innerHTML=fixosOrc.map(function(f){
+    return '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+f.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(f.val)+'</span></div>';
+  }).join('')+
+  '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total fixo</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(tf)+'</span></div>';
+
+  // Variaveis — sem saude variavel
+  var variaveis=[
+    {label:'Lazer & Alimentacao', val:LAZER_LIMIT, note:'teto configurado'},
+    {label:'Vestuario',            val:0,           note:'definir meta'},
+    {label:'Educacao',             val:0,           note:'definir meta'},
+  ];
+  var tv=variaveis.reduce(function(s,i){return s+i.val;},0);
+  document.getElementById('orcVarList').innerHTML=
+    '<div style="font-size:10px;color:var(--muted);padding:10px 16px 4px;letter-spacing:1px">Valores editáveis — ajuste conforme sua realidade</div>'+
+    variaveis.map(function(v){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px">'+
+        '<span style="display:flex;flex-direction:column;gap:2px"><span>'+v.label+'</span><span style="font-size:10px;color:var(--muted)">'+v.note+'</span></span>'+
+        '<span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(v.val)+'</span>'+
+      '</div>';
+    }).join('')+
+    '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total estimado variável</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(tv)+'</span></div>';
+
+  // Metas
+  var tm=ORCAMENTO.metas.reduce(function(s,i){return s+i.val;},0);
+  document.getElementById('orcMetasList').innerHTML=ORCAMENTO.metas.map(function(m){
+    return '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+m.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(m.val)+'</span></div>';
+  }).join('')+
+  '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total metas</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(tm)+'</span></div>';
+
+  // Resumo
+  var totalPlanejado=tf+tv+tm;
+  var sobra=RENDA-totalPlanejado;
+  var positivo=sobra>=0;
+  document.getElementById('orcResumoBadge').textContent='Renda: '+fmt(RENDA);
+  document.getElementById('orcResumo').innerHTML=
+    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Custos fixos</span><span style="font-family:\'DM Mono\',monospace;color:#5a8fa8">'+fmt(tf)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Variáveis estimados</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(tv)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Metas</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(tm)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px;font-weight:600"><span>Total planejado</span><span style="font-family:\'DM Mono\',monospace">'+fmt(totalPlanejado)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:13px;font-weight:600;background:var(--surface2)">'+
+      '<span>Poupança projetada</span>'+
+      '<span style="font-family:\'DM Mono\',monospace;color:'+(positivo?'var(--green)':'var(--red)')+'">'+fmt(Math.abs(sobra))+(positivo?' sobra':' deficit')+'</span>'+
+    '</div>';
+}
+
+function handleDrag(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over');}
+function handleDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)processFile(f);}
+function handleFile(e){if(e.target.files[0])processFile(e.target.files[0]);}
+function processFile(file){var ext=file.name.split('.').pop().toLowerCase();if(ext==='xlsx'||ext==='xls'){readExcel(file);}else{var r=new FileReader();r.onload=function(e){processCSV(e.target.result,file.name);};r.readAsText(file);}}
+function readExcel(file){var reader=new FileReader();reader.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var sheet=wb.Sheets[wb.SheetNames[0]];var json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});if(json.length<2){showNotif('Erro','Planilha vazia.');return;}var hi=0;for(var i=0;i<Math.min(10,json.length);i++){if(json[i].filter(function(c){return String(c).trim()!=='';}).length>1){hi=i;break;}}excelHeaders=json[hi].map(function(h,i){return h!==''?String(h):'Col '+(i+1);});excelRows=json.slice(hi+1).filter(function(r){return r.some(function(c){return String(c).trim()!=='';});});suggestCols();renderExcelPreview(file.name);}catch(err){showNotif('Erro','Não foi possível ler o Excel.');}};reader.readAsArrayBuffer(file);}
+function suggestCols(){colMap={date:null,description:null,amount:null};var dk=['data','date','dt','vencimento'],dsk=['descrição','descricao','estabelecimento','historico','memo'],ak=['valor','amount','total','debito','credito','montante'];excelHeaders.forEach(function(h,i){var hl=h.toLowerCase();if(colMap.date===null&&dk.some(function(k){return hl.indexOf(k)>=0;}))colMap.date=i;if(colMap.description===null&&dsk.some(function(k){return hl.indexOf(k)>=0;}))colMap.description=i;if(colMap.amount===null&&ak.some(function(k){return hl.indexOf(k)>=0;}))colMap.amount=i;});}
+function renderExcelPreview(filename){document.getElementById('excelPreview').style.display='block';document.getElementById('previewTitle').textContent=filename;document.getElementById('previewSub').textContent=excelRows.length+' linhas encontradas';document.getElementById('previewInfo').textContent='Confirme as colunas e clique em Importar';var wrap=document.getElementById('colSelectWrap');wrap.innerHTML='';[{key:'date',label:'Data'},{key:'description',label:'Descrição'},{key:'amount',label:'Valor'}].forEach(function(f){var item=document.createElement('div');item.className='col-select-item';var lbl=document.createElement('div');lbl.className='col-select-label';lbl.textContent=f.label;var sel=document.createElement('select');sel.className='col-select';sel.id='sel_'+f.key;sel.innerHTML='<option value="">— selecione —</option>'+excelHeaders.map(function(h,i){return '<option value="'+i+'"'+(colMap[f.key]===i?' selected':'')+'>'+h+'</option>';}).join('');sel.addEventListener('change',function(){colMap[f.key]=sel.value!==''?parseInt(sel.value):null;});item.appendChild(lbl);item.appendChild(sel);wrap.appendChild(item);});document.getElementById('previewTable').innerHTML='<thead><tr>'+excelHeaders.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>'+excelRows.slice(0,6).map(function(r){return '<tr>'+excelHeaders.map(function(_,i){return '<td>'+(r[i]!==undefined?r[i]:'')+'</td>';}).join('')+'</tr>';}).join('')+'</tbody>';}
+function confirmExcel(){if(colMap.description===null||colMap.amount===null){showNotif('Atenção','Selecione Descrição e Valor.');return;}var count=0;excelRows.forEach(function(r){var desc=String(r[colMap.description]||'').trim();var raw=String(r[colMap.amount]||'').replace(/[R$\s.]/g,'').replace(',','.');var amount=parseFloat(raw);if(!desc||isNaN(amount)||amount<=0)return;if(desc.toLowerCase().indexOf('pagamento')>=0)return;var date=colMap.date!==null?fmtDate(r[colMap.date]):todayStr();transactions.push({id:Date.now()+Math.random(),date:date,month:parseMonth(date),description:desc,amount:Math.abs(amount),category:categorize(desc),type:'debit'});count++;});save();renderDashboard();document.getElementById('excelPreview').style.display='none';showNotif('Importado',count+' transações categorizadas.');switchTab('dashboard');}
+function processCSV(content,filename){var lines=content.split('\n').filter(function(l){return l.trim();});var sep=content.indexOf(';')>=0?';':',';var count=0;lines.slice(1).forEach(function(line){var p=line.split(sep).map(function(x){return x.replace(/"/g,'').trim();});if(p.length<2)return;var rawAmt=null;p.forEach(function(x){var n=parseFloat(x.replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(n)&&n>0&&rawAmt===null)rawAmt=n;});if(rawAmt===null)return;var desc=p[1]||p[0];if(!desc||desc.toLowerCase().indexOf('pagamento')>=0)return;var date=p[0]||todayStr();transactions.push({id:Date.now()+Math.random(),date:date,month:parseMonth(date),description:desc,amount:rawAmt,category:categorize(desc),type:'debit'});count++;});save();renderDashboard();showNotif('Importado',count+' transações.');switchTab('dashboard');}
+function fmtDate(val){if(!val)return todayStr();var s=String(val).trim();if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s)){var p=s.split(/[\/\-]/);return p[0].padStart(2,'0')+'/'+p[1].padStart(2,'0')+'/'+(p[2].length===2?'20'+p[2]:p[2]);}if(/^\d+$/.test(s)){var d=new Date((parseInt(s)-25569)*86400000);return d.toLocaleDateString('pt-BR');}return todayStr();}
+
+function openSheetsModal(){document.getElementById('sheetsModal').classList.add('open');}
+function closeSheetsModal(){document.getElementById('sheetsModal').classList.remove('open');}
+function connectSheets(){var url=document.getElementById('sheetsUrl').value.trim();sheetsUrl=url;localStorage.setItem('fo_sheets',url);if(url)setConnected(true);exportCSV();closeSheetsModal();}
+function setConnected(yes){document.getElementById('statusDot').className='status-dot'+(yes?' on':'');document.getElementById('statusText').textContent=yes?'Sheets conectado':'Não conectado';}
+function exportCSV(){if(!transactions.length){showNotif('Atenção','Sem transações.');return;}var rows=transactions.map(function(t){return t.date+',"'+t.description+'",'+t.category+','+t.amount.toFixed(2)+','+t.type;}).join('\n');var blob=new Blob(['\uFEFF'+'Data,Descrição,Categoria,Valor,Tipo\n'+rows],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance_os_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';a.click();showNotif('Exportado',transactions.length+' transações.');}
+function clearAll(){if(!confirm('Apagar tudo?'))return;transactions=[];save();renderDashboard();showNotif('Limpo','Histórico apagado.');}
+function showNotif(title,msg){document.getElementById('notifTitle').textContent=title;document.getElementById('notifMsg').textContent=msg;var el=document.getElementById('notif');el.classList.add('show');setTimeout(function(){el.classList.remove('show');},3500);}
+</script>
+</body>
+</html>
