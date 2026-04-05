@@ -1,6 +1,6 @@
 exports.handler = async function(event, context) {
   const NOTION_TOKEN = process.env.NOTION_TOKEN;
-  const NOTION_DB_ID = process.env.NOTION_DB_ID || 'fd0eec1591b74a07bcfa456a7bb68bb5';
+  const NOTION_DB_ID = process.env.NOTION_DB_ID || '05a306e12e124c45aead9f18b49cda26';
 
   const headers = {
     'Access-Control-Allow-Origin': '*',
