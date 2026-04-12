@@ -166,15 +166,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div class="logo-sub">Jarvis</div>
   </div>
   <div class="nav-label">Principal</div>
-  <div class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">◈</span> Dashboard</div>
-  <div class="nav-item" onclick="switchTab('historico')"><span class="nav-icon">◫</span> Histórico</div>
-  <div class="nav-item" onclick="switchTab('projecao')"><span class="nav-icon">◎</span> Projeção</div>
-  <div class="nav-item" onclick="switchTab('transactions')"><span class="nav-icon">≡</span> Transações</div>
-  <div class="nav-label">Ferramentas</div>
-  <div class="nav-item" onclick="switchTab('upload')"><span class="nav-icon">↑</span> Importar Fatura</div>
-  <div class="nav-item" onclick="switchTab('orcamento')"><span class="nav-icon">◉</span> Orçamento</div>
-  <div class="nav-label">Integração</div>
-  <div class="nav-item" onclick="openSheetsModal()"><span class="nav-icon">⊞</span> Google Sheets</div>
+  <div class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">◈</span> Realizado</div>
+  <div class="nav-item" onclick="switchTab('orcamento')"><span class="nav-icon">◉</span> Orçado</div>
+  <div class="nav-item" onclick="switchTab('projecao')"><span class="nav-icon">◎</span> Planejamento</div>
   <div class="sidebar-footer">
     <div class="sf-name">Leonardo Passos</div>
     <div class="sf-role">RP Capital · Jarvis</div>
@@ -324,14 +318,181 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </div>
 
 <div id="tab-projecao" style="display:none">
-  <div class="header"><div><div class="page-eyebrow">Planejamento</div><div class="page-title">Projeção <strong>Mensal</strong></div><div class="gold-divider"></div></div></div>
-  <div class="dica-box"><div style="font-size:16px;flex-shrink:0">◎</div><div class="dica-text">Projeção baseada nos seus <strong>custos fixos</strong> + <strong>média dos meses importados</strong> para variáveis. Quanto mais meses, mais precisa.</div></div>
-  <div class="proj-row" id="projRow"></div>
-  <div class="panels-row">
-    <div class="panel"><div class="panel-header"><div class="panel-title">Fixos — Próximo Mês</div><div class="panel-badge">Certo</div></div><div id="projFixos"></div></div>
-    <div class="panel"><div class="panel-header"><div class="panel-title">Variáveis — Estimativa</div><div class="panel-badge">Média histórica</div></div><div id="projVariaveis"></div></div>
+  <div class="header">
+    <div>
+      <div class="page-eyebrow">Planejamento</div>
+      <div class="page-title">Independência <strong>Financeira</strong></div>
+      <div class="gold-divider"></div>
+    </div>
+    <div class="header-right" style="display:flex;gap:8px;align-items:center">
+      <button id="btnVP" class="btn btn-sm" onclick="setModoProj('vp')" style="background:var(--gold);color:#111">Valor Presente</button>
+      <button id="btnNom" class="btn btn-sm" onclick="setModoProj('nominal')">Valor Nominal</button>
+    </div>
+  </div>
+
+  <!-- INPUTS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px">
+
+    <div class="stat-card">
+      <div class="stat-label">Patrimônio Atual</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="pAtual" type="number" value="0" min="0" step="1000"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="calcProj()">
+      </div>
+      <div class="stat-sub">ponto de partida</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Aporte Mensal</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="pAporte" type="number" value="500" min="0" step="100"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="calcProj()">
+      </div>
+      <div class="stat-sub" id="aporteHint">base: média histórica</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Prazo (anos)</div>
+      <input id="pPrazo" type="number" value="30" min="1" max="60" step="1"
+        style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none;margin-top:4px"
+        oninput="calcProj()">
+      <div class="stat-sub">anos até aposentadoria</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Renda Desejada / mês</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="pRenda" type="number" value="15000" min="0" step="500"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="calcProj()">
+      </div>
+      <div class="stat-sub">em valores de hoje</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Expectativa de vida</div>
+      <input id="pVida" type="number" value="90" min="60" max="110" step="1"
+        style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none;margin-top:4px"
+        oninput="calcProj()">
+      <div class="stat-sub">anos (Die With Zero)</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">IPCA esperado</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input id="pIPCA" type="range" min="2" max="8" step="0.25" value="4.5"
+          style="flex:1;accent-color:var(--gold)" oninput="document.getElementById('lblIPCA').textContent=this.value+'%';calcProj()">
+        <span id="lblIPCA" style="color:var(--gold);font-size:13px;min-width:36px">4.5%</span>
+      </div>
+      <div class="stat-sub">inflação anual projetada</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Juros Real</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input id="pJuros" type="range" min="2" max="8" step="0.25" value="4.5"
+          style="flex:1;accent-color:var(--gold)" oninput="document.getElementById('lblJuros').textContent=this.value+'%';calcProj()">
+        <span id="lblJuros" style="color:var(--gold);font-size:13px;min-width:36px">4.5%</span>
+      </div>
+      <div class="stat-sub" id="hintNominal">nominal ≈ <span id="lblNominal">9.2%</span></div>
+    </div>
+
+  </div>
+
+  <!-- BIG NUMBERS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px">
+
+    <div class="stat-card" style="border-top:2px solid var(--gold)">
+      <div class="stat-label">Meta Independência</div>
+      <div class="stat-value green" id="projMetaIF">R$ 0</div>
+      <div class="stat-sub">renda × 12 / 4,25%</div>
+    </div>
+
+    <div class="stat-card" style="border-top:2px solid #6a9e78">
+      <div class="stat-label">Patrimônio Projetado</div>
+      <div class="stat-value" id="projPatrimonio">R$ 0</div>
+      <div class="stat-sub" id="projPatrimonioSub">em <span id="projAnos">30</span> anos</div>
+    </div>
+
+    <div class="stat-card" style="border-top:2px solid #c0634a">
+      <div class="stat-label">Gap</div>
+      <div class="stat-value" id="projGap">R$ 0</div>
+      <div class="stat-sub" id="projGapSub">diferença para meta</div>
+    </div>
+
+    <div class="stat-card" style="border-top:2px solid var(--gold)">
+      <div class="stat-label">Independência em</div>
+      <div class="stat-value gold" id="projAnosIF" style="color:var(--gold)">— anos</div>
+      <div class="stat-sub" id="projAnosSub">aporte atual mantido</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Aporte sugerido hoje</div>
+      <div class="stat-value" id="projAporteSug">R$ 0</div>
+      <div class="stat-sub">para atingir meta no prazo</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Valor Presente da Meta</div>
+      <div class="stat-value" id="projVP">R$ 0</div>
+      <div class="stat-sub">meta em valores de hoje</div>
+    </div>
+
+  </div>
+
+  <!-- GRÁFICO -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <div class="panel-title">Projeção Patrimonial</div>
+      <div class="panel-badge" id="projModoBadge">Valor Presente</div>
+    </div>
+    <div style="position:relative;height:340px;padding:8px">
+      <canvas id="chartProj"></canvas>
+    </div>
+    <div style="display:flex;gap:20px;padding:12px 16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        <div style="width:24px;height:2px;background:#c9a96e"></div>
+        Meta Independência (4,25%)
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        <div style="width:24px;height:2px;background:#6a9e78"></div>
+        Die With Zero
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        <div style="width:24px;height:2px;background:#5a8fa8"></div>
+        Sua Projeção Atual
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELA APORTE SUGERIDO POR ANO -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Aporte Sugerido por Ano</div>
+      <div class="panel-badge">pace para a meta</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px" id="tblAporte">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="padding:8px 12px;text-align:left;color:var(--muted);font-weight:500;letter-spacing:1px;font-size:10px">ANO</th>
+            <th style="padding:8px 12px;text-align:right;color:var(--muted);font-weight:500;letter-spacing:1px;font-size:10px">APORTE SUGERIDO</th>
+            <th style="padding:8px 12px;text-align:right;color:var(--muted);font-weight:500;letter-spacing:1px;font-size:10px">PATRIMÔNIO ALVO</th>
+            <th style="padding:8px 12px;text-align:right;color:var(--muted);font-weight:500;letter-spacing:1px;font-size:10px">PATRIMÔNIO PROJETADO</th>
+            <th style="padding:8px 12px;text-align:right;color:var(--muted);font-weight:500;letter-spacing:1px;font-size:10px">STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="tblAporteBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
+
 
 <div id="tab-transactions" style="display:none">
   <div class="header">
@@ -367,11 +528,59 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </div>
 
 <div id="tab-orcamento" style="display:none">
-  <div class="header"><div><div class="page-eyebrow">Planejamento</div><div class="page-title">Meu <strong>Orçamento</strong></div><div class="gold-divider"></div></div></div>
-  <div class="panel"><div class="panel-header"><div class="panel-title">Custos Fixos</div><div class="panel-badge">Mensal</div></div><div id="orcFixosList"></div></div>
-  <div class="panel"><div class="panel-header"><div class="panel-title">Variáveis Estimados</div><div class="panel-badge">Limite mensal</div></div><div id="orcVarList"></div></div>
-  <div class="panel"><div class="panel-header"><div class="panel-title">Metas</div><div class="panel-badge">Mensal</div></div><div id="orcMetasList"></div></div>
-  <div class="panel"><div class="panel-header"><div class="panel-title">Resumo</div><div class="panel-badge" id="orcResumoBadge">Renda configurável</div></div><div id="orcResumo"></div></div>
+  <div class="header"><div><div class="page-eyebrow">Orçado</div><div class="page-title">Meu <strong>Orçamento</strong></div><div class="gold-divider"></div></div></div>
+
+  <!-- CONFIGURAÇÃO DE RENDA -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    <div class="stat-card">
+      <div class="stat-label">Renda mensal</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="orc_rendaInput" type="number" value="5500" min="0" step="100"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="RENDA=parseInt(this.value)||5500;localStorage.setItem('fo_renda',RENDA);document.getElementById('rendaInput').value=RENDA;renderDashboard()">
+      </div>
+      <div class="stat-sub">salário do mês</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Limite variáveis</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="orc_lazerInput" type="number" value="741" min="0" step="50"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="LAZER_LIMIT=parseInt(this.value)||741;localStorage.setItem('fo_lazer',LAZER_LIMIT);document.getElementById('lazerInput').value=LAZER_LIMIT;renderDashboard()">
+      </div>
+      <div class="stat-sub">teto mensal variável</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Reserva viagem</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+        <span style="color:var(--muted);font-size:11px">R$</span>
+        <input id="orc_viagemInput" type="number" value="500" min="0" step="100"
+          style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;width:100%;outline:none"
+          oninput="VIAGEM=parseInt(this.value)||500;localStorage.setItem('fo_viagem',VIAGEM);document.getElementById('viagemInput').value=VIAGEM;renderDashboard()">
+      </div>
+      <div class="stat-sub">separado todo mês</div>
+    </div>
+  </div>
+
+  <!-- CUSTOS FIXOS DO NOTION -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Custos Fixos</div>
+      <div class="panel-badge" id="fixosBadge">do Notion</div>
+    </div>
+    <div id="fixosList"></div>
+  </div>
+
+  <!-- CONTROLE DE PARCELAS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Parcelas Ativas</div>
+      <div class="panel-badge" id="parcelasBadge">do Notion</div>
+    </div>
+    <div id="parcelasList"></div>
+  </div>
 </div>
 
 </main>
@@ -418,29 +627,42 @@ var LAZER_LIMIT=parseInt(localStorage.getItem('fo_lazer')||'741');
 var VIAGEM=parseInt(localStorage.getItem('fo_viagem')||'500');
 
 // Busca transacoes via Netlify Function (evita bloqueio CORS)
+var notionFixos=[];
+var notionParcelas=[];
+
 async function loadFromNotion(){
   try{
     var resp=await fetch('/.netlify/functions/notion');
     if(!resp.ok) return;
     var data=await resp.json();
-    if(!data.transactions||!data.transactions.length) return;
-    var loaded=data.transactions;
-    transactions=loaded.map(function(t){
-      return {
-        id:t.id,
-        date:t.date?t.date.split('-').reverse().join('/'):todayStr(),
-        month:t.month||'',
-        description:t.description,
-        amount:t.amount,
-        category:t.category,
-        type:'debit'
-      };
-    });
-    save();
-    var ms=getMonths();
-    currentPeriod=ms.length?ms[ms.length-1]:'all';
+
+    // Transacoes
+    if(data.transactions&&data.transactions.length){
+      transactions=data.transactions.map(function(t){
+        return {
+          id:t.id,
+          date:t.date?t.date.split('-').reverse().join('/'):todayStr(),
+          month:t.month||'',
+          description:t.description,
+          amount:t.amount,
+          category:t.category,
+          type:'debit'
+        };
+      });
+      save();
+      var ms=getMonths();
+      currentPeriod=ms.length?ms[ms.length-1]:'all';
+    }
+
+    // Fixos do Notion
+    if(data.fixos&&data.fixos.length) notionFixos=data.fixos;
+
+    // Parcelas do Notion
+    if(data.parcelas&&data.parcelas.length) notionParcelas=data.parcelas;
+
     renderDashboard();
-    showNotif('Notion',transactions.length+' transacoes carregadas!');
+    setConnected(true,'Notion — '+transactions.length+' transações');
+    showNotif('Notion',transactions.length+' transações carregadas!');
   }catch(e){
     console.log('Notion offline, usando dados locais');
   }
@@ -496,7 +718,9 @@ var MAR26=[{"date":"01/03/2026","description":"SRMERCADOVIRTUAL","category":"Ali
 
 function parseMonth(d){if(!d)return '';var p=d.split('/');if(p.length===3)return p[2]+'-'+p[1].padStart(2,'0');return '';}
 function todayStr(){return new Date().toLocaleDateString('pt-BR');}
-function fmt(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+var _fmt = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+function fmt(v){ return _fmt.format(isNaN(v)||!isFinite(v)?0:v); }
+function fmtPct(v){ return (v*100).toFixed(2).replace('.',',')+'%'; }
 function save(){localStorage.setItem('fo_txns',JSON.stringify(transactions));}
 
 function getMonths(){
@@ -576,18 +800,25 @@ function saveConfig(){
 }
 
 function switchTab(tab){
-  ['dashboard','historico','projecao','transactions','upload','orcamento'].forEach(function(t){
+  ['dashboard','orcamento','projecao'].forEach(function(t){
     var el=document.getElementById('tab-'+t);
+    if(!el) return;
     el.style.display=t===tab?'flex':'none';
     if(t===tab){el.style.flexDirection='column';el.style.gap='20px';}
   });
   document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active');});
-  var map={dashboard:0,historico:1,projecao:2,transactions:3,upload:4,orcamento:5};
-  if(map[tab]!==undefined)document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
-  if(tab==='dashboard')renderDashboard();
-  if(tab==='historico')renderHistorico();
-  if(tab==='projecao')renderProjecao();
-  if(tab==='transactions')renderAllTxns();
+  var map={dashboard:0,orcamento:1,projecao:2};
+  if(map[tab]!==undefined) document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='projecao'){
+    // Bug D fix: requestAnimationFrame garante que o canvas ja tem dimensao
+    // antes de o Chart.js tentar renderizar — mais confiavel que setTimeout
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        renderProjecao();
+      });
+    });
+  }
 }
 
 function setPeriod(btn,period){
@@ -623,14 +854,21 @@ function renderDashboard(){
   var sorted=Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
 
   // ── CARDS ──────────────────────────────────────────────────────────────────
-  var segReal=cats['Seguros']||289.45;
+  // Fixos: usa Notion se disponível, senão fallback hardcoded
+  var totalFixo;
+  if(notionFixos.length>0){
+    totalFixo = notionFixos.reduce(function(s,f){return s+f.valor;},0);
+  } else {
+    var segReal=cats['Seguros']||289.45;
+    var transpTotal=1270.44+500+segReal;
+    totalFixo=transpTotal+500.00+79.90+120.00+100+139.90;
+  }
+
+  // Variáveis: unifica Lazer (remove distinção lazer puro / lazer & cultura)
   var alimentacaoReal=cats['Alimentacao']||0;
-  var lazerPuroReal=cats['Lazer']||0;
-  var lazerReal=alimentacaoReal+lazerPuroReal;  // total variavel = alimentacao + lazer
-  var transpTotal=1270.44+500+segReal;
-  var totalFixo=transpTotal+500.00+79.90+120.00+100+139.90;
-  var totalVar=lazerReal;
-  var lazerPct=LAZER_LIMIT>0?Math.round(lazerReal/LAZER_LIMIT*100):0;
+  var lazerReal=(cats['Lazer']||0);
+  var totalVar=alimentacaoReal+lazerReal;  // Bug 1 fix: unificado mas inclui Alimentacao
+  var lazerPct=LAZER_LIMIT>0?Math.round(totalVar/LAZER_LIMIT*100):0;
   var totalComprometido=totalFixo+totalVar+VIAGEM;
   var saldo=RENDA-totalComprometido;
   var positivo=saldo>=0;
@@ -1019,19 +1257,259 @@ function renderComparativo(ms,catsA){
   if(ctx2) barChart=new Chart(ctx2.getContext('2d'),{type:'bar',data:{labels:cats,datasets:[{label:lblA,data:cats.map(function(c){return catsA[c]||0;}),backgroundColor:cats.map(function(_,i){return COLORS[i%COLORS.length]+'cc';}),borderColor:cats.map(function(_,i){return COLORS[i%COLORS.length];}),borderWidth:1},{label:lblB,data:cats.map(function(c){return catsB[c]||0;}),backgroundColor:'rgba(255,255,255,0.07)',borderColor:'rgba(255,255,255,0.18)',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#8a8070',font:{family:'Montserrat',size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#8a8070',font:{family:'DM Mono',size:10},callback:function(v){return 'R$'+v.toLocaleString('pt-BR');}},grid:{color:'rgba(255,255,255,0.06)'}}},plugins:{legend:{labels:{color:'#8a8070',font:{family:'Montserrat',size:11},boxWidth:10}}}}});
 }
 
-function renderProjecao(){
-  var totalFixo=ORCAMENTO.fixos.reduce(function(s,i){return s+i.val;},0);
-  var totalMetas=ORCAMENTO.metas.reduce(function(s,i){return s+i.val;},0);
-  var ms=getMonths();
-  var nM=Math.max(1,ms.length);
-  var varCats=['Alimentacao','Lazer','Servicos'];
-  var avgVar={};var totalVar=0;
-  varCats.forEach(function(c){var a=transactions.filter(function(t){return t.category===c;}).reduce(function(s,t){return s+t.amount;},0)/nM;avgVar[c]=a;totalVar+=a;});
-  var margem=ORCAMENTO.salario-totalFixo-totalVar-totalMetas;
-  document.getElementById('projRow').innerHTML='<div class="proj-card"><div class="proj-label">Fixos certos</div><div class="proj-value">'+fmt(totalFixo)+'</div><div class="proj-sub">Todo mês sem variação</div></div><div class="proj-card"><div class="proj-label">Variáveis estimados</div><div class="proj-value">'+fmt(totalVar)+'</div><div class="proj-sub">Média de '+nM+' '+(nM===1?'mês':'meses')+' importado'+(nM===1?'':'s')+'</div></div><div class="proj-card"><div class="proj-label">Margem projetada</div><div class="proj-value '+(margem>=0?'green':'red')+'">'+fmt(margem)+'</div><div class="proj-sub">Após fixos, variáveis e metas</div></div>';
-  document.getElementById('projFixos').innerHTML=ORCAMENTO.fixos.map(function(f){return '<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+f.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(f.val)+'</span></div>';}).join('')+'<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(totalFixo)+'</span></div>';
-  document.getElementById('projVariaveis').innerHTML=varCats.map(function(c,i){return '<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;background:'+COLORS[i]+';display:inline-block"></span>'+c+'</span><span style="font-family:\'DM Mono\',monospace;color:'+COLORS[i]+'">'+fmt(avgVar[c])+'</span></div>';}).join('')+'<div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total estimado</span><span style="font-family:\'DM Mono\',monospace">'+fmt(totalVar)+'</span></div>';
+// ── SIMULADOR DE APOSENTADORIA ────────────────────────────────────────────────
+var projChart=null;
+
+// Plugin global: linha vertical marcando aposentadoria
+Chart.register({
+  id:'linhaAposentadoria',
+  afterDraw:function(chart){
+    if(!chart._aposentadoriaIdx) return;
+    var idx=chart._aposentadoriaIdx;
+    var xScale=chart.scales.x;
+    if(!xScale) return;
+    var x=xScale.getPixelForValue(idx);
+    var ctx2=chart.ctx;
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.moveTo(x,chart.chartArea.top);
+    ctx2.lineTo(x,chart.chartArea.bottom);
+    ctx2.strokeStyle='rgba(201,169,110,0.3)';
+    ctx2.lineWidth=1;
+    ctx2.setLineDash([4,4]);
+    ctx2.stroke();
+    ctx2.setLineDash([]);
+    ctx2.fillStyle='rgba(201,169,110,0.55)';
+    ctx2.font='10px Montserrat,sans-serif';
+    ctx2.fillText('aposentadoria',x+4,chart.chartArea.top+14);
+    ctx2.restore();
+  }
+});
+var projModo='vp'; // 'vp' ou 'nominal'
+var projIdade=29;  // Leonardo faz 30 em agosto/2026
+
+function setModoProj(modo){
+  projModo=modo;
+  document.getElementById('btnVP').style.background=modo==='vp'?'var(--gold)':'transparent';
+  document.getElementById('btnVP').style.color=modo==='vp'?'#111':'var(--text)';
+  document.getElementById('btnNom').style.background=modo==='nominal'?'var(--gold)':'transparent';
+  document.getElementById('btnNom').style.color=modo==='nominal'?'#111':'var(--text)';
+  document.getElementById('projModoBadge').textContent=modo==='vp'?'Valor Presente':'Valor Nominal';
+  calcProj();
 }
+
+function calcProj(){
+  // ── 1. INPUTS ────────────────────────────────────────────────────────────────
+  var P0    = parseFloat(document.getElementById('pAtual').value)||0;
+  var aporte= parseFloat(document.getElementById('pAporte').value)||500;
+  var prazo = parseInt(document.getElementById('pPrazo').value)||30;
+  var renda = parseFloat(document.getElementById('pRenda').value)||15000;
+  var vida  = parseInt(document.getElementById('pVida').value)||90;
+  var ipca  = parseFloat(document.getElementById('pIPCA').value)/100||0.045;
+  var real  = parseFloat(document.getElementById('pJuros').value)/100||0.045;
+  var nominal = (1+real)*(1+ipca)-1;
+  var anoAtual = new Date().getFullYear();
+
+  document.getElementById('lblNominal').textContent=(nominal*100).toFixed(1)+'%';
+
+  // Aporte histórico médio do Notion
+  var ms=getMonths(); var nM=Math.max(1,ms.length);
+  var despMedia=transactions.filter(function(t){return t.type==='debit';})
+    .reduce(function(s,t){return s+t.amount;},0)/nM;
+  var poupancaMedia=Math.max(0,RENDA-despMedia);
+  if(poupancaMedia>0 && document.getElementById('pAporte').value=='500'){
+    document.getElementById('pAporte').value=Math.round(poupancaMedia);
+    aporte=poupancaMedia;
+  }
+  document.getElementById('aporteHint').textContent='média real: '+nM+' mês(es) importado(s)';
+
+  // ── 2. TAXAS — tudo em regime composto ───────────────────────────────────────
+  var rm  = Math.pow(1+real, 1/12) - 1;    // taxa real mensal composta
+  var n   = prazo * 12;                     // prazo em meses
+
+  // ── 3. LINHA 1 — META DE INDEPENDÊNCIA FINANCEIRA ────────────────────────────
+  // Patrimônio necessário = Renda mensal / taxa real mensal
+  // (perpetuidade: PMT / i — regime composto, base mensal)
+  var metaIF = renda / rm;
+
+  // PMT mensal para atingir metaIF — tudo em base mensal composta
+  // PMT = (Meta - P0*(1+rm)^n) * rm / ((1+rm)^n - 1)
+  var fatorN   = Math.pow(1+rm, n);
+  // PMT Antecipado = PMT vencido / (1+rm)
+  var aporteSug = ((metaIF - P0*fatorN) * rm / (fatorN - 1)) / (1+rm);
+  if(aporteSug < 0) aporteSug = 0;
+
+  // Gráfico linha 1: acumulação mês a mês com PMT sugerido
+  var linha1=[P0]; var pat1=P0;
+  for(var y=1;y<=prazo;y++){
+    for(var m=0;m<12;m++) pat1 = pat1*(1+rm) + aporteSug;
+    linha1.push(pat1);
+  }
+
+  // ── 4. LINHA 2 — DIE WITH ZERO ───────────────────────────────────────────────
+  // Etapa 1: VP da anuidade de descumulação (regime composto, base mensal)
+  // VP = PMT * (1 - (1+rm)^-nDesc) / rm
+  // VF = 0, PMT = renda mensal, n = meses entre aposentadoria e expectativa de vida
+  var anosDesc = Math.max(5, vida - projIdade - prazo);
+  var nDesc    = anosDesc * 12;
+  var dwzVP    = renda * (1 - Math.pow(1+rm, -nDesc)) / rm;
+  // dwzVP = patrimônio necessário no momento da aposentadoria para zerar em 'vida'
+
+  // Etapa 2: PMT antecipado para acumular dwzVP no prazo
+  var pmtDWZ = ((dwzVP - P0*fatorN) * rm / (fatorN - 1)) / (1+rm);
+  if(pmtDWZ < 0) pmtDWZ = 0;
+
+  // Fase acumulação (0 → prazo)
+  var linha2=[P0]; var pat2=P0;
+  for(var y=1;y<=prazo;y++){
+    for(var m=0;m<12;m++) pat2 = pat2*(1+rm) + pmtDWZ;
+    linha2.push(pat2);
+  }
+  // Fase descumulação (aposentadoria → expectativa de vida)
+  // Cada mês: pat = pat*(1+rm) - renda  →  zera em nDesc meses
+  var pat2d = pat2;
+  for(var y=1;y<=anosDesc;y++){
+    for(var m=0;m<12;m++) pat2d = pat2d*(1+rm) - renda;
+    linha2.push(Math.max(0, pat2d));
+  }
+
+  // ── 5. LINHA 3 — PROJEÇÃO ATUAL (histórico real do Notion) ───────────────────
+  // FV = P0*(1+rm)^n + PMT*((1+rm)^n - 1)/rm  — regime composto, base mensal
+  var pmt3 = aporte;   // aporte mensal em valores reais
+  var linha3=[P0]; var pat3=P0;
+  for(var y=1;y<=prazo;y++){
+    for(var m=0;m<12;m++) pat3 = pat3*(1+rm) + pmt3;
+    linha3.push(pat3);
+  }
+  // Pós-aposentadoria: patrimônio continua rendendo sem aportes (horizontal real)
+  // Bug 5 fix: descumula com renda desejada até zerar
+  var pat3desc = pat3;
+  for(var y=1;y<=anosDesc;y++){
+    for(var m=0;m<12;m++) pat3desc = pat3desc*(1+rm) - renda;
+    linha3.push(Math.max(0, pat3desc));
+    if(pat3desc <= 0) break;
+  }
+  while(linha3.length <= totalAnos) linha3.push(0);
+
+  // ── 6. LABELS DO EIXO X (acumulação + descumulação) ─────────────────────────
+  var totalAnos  = prazo + anosDesc;
+  var anosLabels = [];
+  for(var y=0;y<=totalAnos;y++) anosLabels.push(String(anoAtual+y));
+
+  // Linha 1 (IF): continua horizontal em metaIF pós-aposentadoria
+  while(linha1.length <= totalAnos) linha1.push(metaIF);
+
+  // ── 7. TOGGLE VP/NOMINAL ─────────────────────────────────────────────────────
+  function toModo(arr){
+    return arr.map(function(v,i){
+      if(v===null||v===undefined) return null;
+      if(isNaN(v)||!isFinite(v)) return null;
+      return projModo==='vp' ? v : v*Math.pow(1+ipca,i);
+    });
+  }
+  var d1=toModo(linha1);
+  var d2=toModo(linha2);
+  var d3=toModo(linha3);
+
+  // ── 8. CARDS ─────────────────────────────────────────────────────────────────
+  var patFinalProj = linha3[prazo]||0;
+  var gap = metaIF - patFinalProj;
+
+  // Anos para atingir IF com aporte atual — usa rm (taxa real mensal)
+  var anosIF=null;
+  var patSim=P0;
+  for(var mm=1;mm<=70*12;mm++){
+    patSim = patSim*(1+rm) + aporte;
+    if(patSim >= metaIF){anosIF=Math.ceil(mm/12);break;}
+  }
+
+  document.getElementById('projMetaIF').textContent=fmt(metaIF);
+  document.getElementById('projMetaIF').className='stat-value '+(gap<=0?'green':'');
+  document.getElementById('projPatrimonio').textContent=fmt(patFinalProj);
+  document.getElementById('projPatrimonio').className='stat-value '+(gap<=0?'green':'');
+  document.getElementById('projAnos').textContent=prazo;
+  document.getElementById('projGap').textContent=(gap>0?'- ':'')+fmt(Math.abs(gap));
+  document.getElementById('projGap').className='stat-value '+(gap>0?'red':'green');
+  document.getElementById('projGapSub').textContent=gap>0?'falta para meta IF':'acima da meta';
+  document.getElementById('projAnosIF').textContent=anosIF?anosIF+' anos':'> 70 anos';
+  document.getElementById('projAnosSub').textContent='independência ~'+(anosIF?anoAtual+anosIF:'?');
+  document.getElementById('projAporteSug').textContent=fmt(aporteSug);
+  document.getElementById('projVP').textContent=fmt(metaIF);
+
+  // ── 9. GRÁFICO ───────────────────────────────────────────────────────────────
+  var canvasEl = document.getElementById('chartProj');
+  if(!canvasEl) return;
+  if(projChart){projChart.destroy();projChart=null;}
+  var ctx=document.getElementById('chartProj').getContext('2d');
+
+  projChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:anosLabels,
+      datasets:[
+        {label:'Meta Independência ('+(real*100).toFixed(1)+'%)',data:d1,borderColor:'#c9a96e',borderWidth:2,pointRadius:0,fill:false,tension:0.4,spanGaps:true},
+        {label:'Die With Zero',data:d2,borderColor:'#6a9e78',borderWidth:2,pointRadius:0,fill:false,tension:0.4,spanGaps:true,borderDash:[6,3]},
+        {label:'Sua Projeção Atual',data:d3,borderColor:'#5a8fa8',borderWidth:2.5,pointRadius:0,fill:false,tension:0.4,spanGaps:true}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1c1c1c',borderColor:'#3a3a3a',borderWidth:1,
+          titleColor:'#c9a96e',bodyColor:'#e0d8cc',
+          callbacks:{
+            title:function(items){
+              var y=items[0].dataIndex;
+              return anosLabels[y]+' ('+y+' anos)';
+            },
+            label:function(c){
+              if(c.parsed.y===null||c.parsed.y===undefined) return null;
+              return c.dataset.label+': '+fmt(c.parsed.y);
+            }
+          }
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(58,58,58,0.3)'},ticks:{color:'#8a8070',font:{size:10},maxTicksLimit:12}},
+        y:{grid:{color:'rgba(58,58,58,0.3)'},ticks:{color:'#8a8070',font:{size:10},
+          callback:function(v){
+            return 'R$'+Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v);
+          }
+        }}
+      }
+    }
+  });
+
+  // Linha vertical de aposentadoria via plugin global (após criar o chart)
+  projChart._aposentadoriaIdx = prazo;
+
+  // ── 10. TABELA APORTE SUGERIDO POR ANO ───────────────────────────────────────
+  var tbody=document.getElementById('tblAporteBody');
+  var rows='';
+  for(var y=1;y<=Math.min(prazo,30);y++){
+    // Aporte sugerido cresce pela inflação (em termos nominais)
+    var apSugAno = aporteSug * Math.pow(1+ipca, y-1);
+    var patAlvoY = linha1[y]||0;
+    var patProjY = linha3[y]||0;
+    var ok = patProjY >= patAlvoY*0.90;
+    rows+='<tr style="border-bottom:1px solid rgba(58,58,58,0.3)">'+
+      '<td style="padding:8px 12px;color:var(--muted)">'+(anoAtual+y)+'</td>'+
+      '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(apSugAno)+'</td>'+
+      '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;color:var(--muted)">'+fmt(patAlvoY)+'</td>'+
+      '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace">'+fmt(patProjY)+'</td>'+
+      '<td style="padding:8px 12px;text-align:right"><span style="font-size:9px;padding:2px 8px;border-radius:10px;background:'+(ok?'rgba(58,100,58,0.2)':'rgba(160,60,60,0.15)')+';color:'+(ok?'#6a9e78':'#c05545')+'">'+(ok?'no pace':'abaixo')+'</span></td>'+
+      '</tr>';
+  }
+  tbody.innerHTML=rows;
+}
+
+function renderProjecao(){
+  calcProj();
+}
+
 
 function renderAllTxns(){
   buildPeriodBtns('txnPeriodBar',txnFilter,'setTxnFilter');
@@ -1062,61 +1540,75 @@ function saveCatEdit(){if(!editingId||!selectedCat)return;var t=transactions.fin
 function closeCatModal(){document.getElementById('catModal').classList.remove('open');editingId=null;selectedCat=null;}
 
 function renderOrcamento(){
-  // Fixos — inclui TotalPass e cuidados pessoais
-  var fixosOrc=[
-    {label:'Parcela do carro',    val:1270.44},
-    {label:'Plano de saude',      val:500.00},
-    {label:'TotalPass (academia)',val:139.90},
-    {label:'Gasolina',            val:500.00},
-    {label:'Seguro do carro',     val:289.45},
-    {label:'Cuidados pessoais',   val:100.00},
-    {label:'Assinaturas digitais',val:79.90},
-    {label:'Claude Pro',          val:120.00},
+  // Custos fixos — usa Notion se disponível, senão fallback
+  var fixosSrc = notionFixos.length > 0 ? notionFixos.map(function(f){
+    return {label: f.descricao, val: f.valor, cat: f.categoria};
+  }) : [
+    {label:'Parcela do carro',     val:1270.44, cat:'Transporte'},
+    {label:'Plano de saude',       val:500.00,  cat:'Saude'},
+    {label:'TotalPass',            val:139.90,  cat:'Saude'},
+    {label:'Gasolina',             val:500.00,  cat:'Transporte'},
+    {label:'Seguro do carro',      val:289.45,  cat:'Seguros'},
+    {label:'Cuidados pessoais',    val:100.00,  cat:'Outros'},
+    {label:'Assinaturas digitais', val:79.90,   cat:'Assinaturas'},
+    {label:'Claude Pro',           val:120.00,  cat:'Assinaturas'},
   ];
-  var tf=fixosOrc.reduce(function(s,i){return s+i.val;},0);
-  document.getElementById('orcFixosList').innerHTML=fixosOrc.map(function(f){
-    return '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+f.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(f.val)+'</span></div>';
-  }).join('')+
-  '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total fixo</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(tf)+'</span></div>';
-
-  // Variaveis — sem saude variavel
-  var variaveis=[
-    {label:'Lazer & Alimentacao', val:LAZER_LIMIT, note:'teto configurado'},
-    {label:'Vestuario',            val:0,           note:'definir meta'},
-    {label:'Educacao',             val:0,           note:'definir meta'},
-  ];
-  var tv=variaveis.reduce(function(s,i){return s+i.val;},0);
-  document.getElementById('orcVarList').innerHTML=
-    '<div style="font-size:10px;color:var(--muted);padding:10px 16px 4px;letter-spacing:1px">Valores editáveis — ajuste conforme sua realidade</div>'+
-    variaveis.map(function(v){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px">'+
-        '<span style="display:flex;flex-direction:column;gap:2px"><span>'+v.label+'</span><span style="font-size:10px;color:var(--muted)">'+v.note+'</span></span>'+
-        '<span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(v.val)+'</span>'+
+  var tf = fixosSrc.reduce(function(s,f){return s+f.val;},0);
+  var catCores = {Transporte:'#5a8fa8',Saude:'#6a9e78',Seguros:'#8a8070',Assinaturas:'#c9a96e',Moradia:'#a07850',Outros:'#8a7060'};
+  document.getElementById('fixosBadge').textContent = notionFixos.length > 0 ? notionFixos.length+' itens do Notion' : 'fallback local';
+  document.getElementById('fixosList').innerHTML =
+    fixosSrc.map(function(f){
+      var cor = catCores[f.cat]||'var(--muted)';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.3);font-size:12px">'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="width:6px;height:6px;border-radius:50%;background:'+cor+';display:inline-block"></span>'+
+          '<span>'+f.label+'</span>'+
+          '<span style="font-size:10px;color:'+cor+';background:'+cor+'18;padding:1px 6px;border-radius:8px">'+f.cat+'</span>'+
+        '</div>'+
+        '<span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(f.val)+'</span>'+
       '</div>';
     }).join('')+
-    '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total estimado variável</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(tv)+'</span></div>';
-
-  // Metas
-  var tm=ORCAMENTO.metas.reduce(function(s,i){return s+i.val;},0);
-  document.getElementById('orcMetasList').innerHTML=ORCAMENTO.metas.map(function(m){
-    return '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>'+m.label+'</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(m.val)+'</span></div>';
-  }).join('')+
-  '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)"><span>Total metas</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(tm)+'</span></div>';
-
-  // Resumo
-  var totalPlanejado=tf+tv+tm;
-  var sobra=RENDA-totalPlanejado;
-  var positivo=sobra>=0;
-  document.getElementById('orcResumoBadge').textContent='Renda: '+fmt(RENDA);
-  document.getElementById('orcResumo').innerHTML=
-    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Custos fixos</span><span style="font-family:\'DM Mono\',monospace;color:#5a8fa8">'+fmt(tf)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Variáveis estimados</span><span style="font-family:\'DM Mono\',monospace;color:var(--gold-dim)">'+fmt(tv)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px"><span>Metas</span><span style="font-family:\'DM Mono\',monospace;color:var(--green)">'+fmt(tm)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.5);font-size:12px;font-weight:600"><span>Total planejado</span><span style="font-family:\'DM Mono\',monospace">'+fmt(totalPlanejado)+'</span></div>'+
-    '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:13px;font-weight:600;background:var(--surface2)">'+
-      '<span>Poupança projetada</span>'+
-      '<span style="font-family:\'DM Mono\',monospace;color:'+(positivo?'var(--green)':'var(--red)')+'">'+fmt(Math.abs(sobra))+(positivo?' sobra':' deficit')+'</span>'+
+    '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)">'+
+      '<span>Total fixo mensal</span>'+
+      '<span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(tf)+'</span>'+
     '</div>';
+
+  // Parcelas — usa Notion se disponível
+  var parcelasSrc = notionParcelas.length > 0 ? notionParcelas : [];
+  document.getElementById('parcelasBadge').textContent = parcelasSrc.length > 0 ? parcelasSrc.length+' ativas' : 'nenhuma ativa';
+  if(parcelasSrc.length === 0){
+    document.getElementById('parcelasList').innerHTML =
+      '<div style="padding:20px 16px;text-align:center;color:var(--muted);font-size:12px">Nenhuma parcela ativa. Adicione no Notion.</div>';
+  } else {
+    var totalParcelas = parcelasSrc.reduce(function(s,p){return s+p.valor;},0);
+    document.getElementById('parcelasList').innerHTML =
+      '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:8px 16px;font-size:10px;color:var(--muted);letter-spacing:1px;border-bottom:1px solid var(--border)">'+
+        '<span>DESCRIÇÃO</span><span style="text-align:right">PARCELA</span><span style="text-align:center">PROGRESSO</span><span style="text-align:right">RESTAM</span>'+
+      '</div>'+
+      parcelasSrc.map(function(p){
+        var pct = p.totalParcelas > 0 ? Math.round(p.parcelasPagas/p.totalParcelas*100) : 0;
+        var restam = p.parcelasRestantes;
+        var saldoDevedor = p.valor * restam;
+        return '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 16px;border-bottom:1px solid rgba(58,58,58,0.3);align-items:center;font-size:12px">'+
+          '<div>'+
+            '<div>'+p.descricao+'</div>'+
+            '<div style="font-size:10px;color:var(--muted);margin-top:2px">Saldo devedor: '+fmt(saldoDevedor)+(p.vencimento?' · vence dia '+p.vencimento:'')+'</div>'+
+          '</div>'+
+          '<div style="text-align:right;font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(p.valor)+'</div>'+
+          '<div style="padding:0 8px">'+
+            '<div style="height:4px;background:var(--border);border-radius:2px">'+
+              '<div style="width:'+pct+'%;height:100%;background:var(--green);border-radius:2px"></div>'+
+            '</div>'+
+            '<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:3px">'+p.parcelasPagas+'/'+p.totalParcelas+'</div>'+
+          '</div>'+
+          '<div style="text-align:right;font-family:\'DM Mono\',monospace;color:'+(restam<=3?'var(--red)':'var(--muted)')+'">'+restam+'x</div>'+
+        '</div>';
+      }).join('')+
+      '<div style="display:flex;justify-content:space-between;padding:14px 16px;font-size:12px;font-weight:600;background:var(--surface2)">'+
+        '<span>Total parcelas/mês</span>'+
+        '<span style="font-family:\'DM Mono\',monospace;color:var(--gold)">'+fmt(totalParcelas)+'</span>'+
+      '</div>';
+  }
 }
 
 function handleDrag(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over');}
@@ -1133,7 +1625,7 @@ function fmtDate(val){if(!val)return todayStr();var s=String(val).trim();if(/^\d
 function openSheetsModal(){document.getElementById('sheetsModal').classList.add('open');}
 function closeSheetsModal(){document.getElementById('sheetsModal').classList.remove('open');}
 function connectSheets(){var url=document.getElementById('sheetsUrl').value.trim();sheetsUrl=url;localStorage.setItem('fo_sheets',url);if(url)setConnected(true);exportCSV();closeSheetsModal();}
-function setConnected(yes){document.getElementById('statusDot').className='status-dot'+(yes?' on':'');document.getElementById('statusText').textContent=yes?'Sheets conectado':'Não conectado';}
+function setConnected(yes,msg){document.getElementById('statusDot').className='status-dot'+(yes?' on':'');document.getElementById('statusText').textContent=yes?(msg||'Notion conectado'):'Não conectado';}
 function exportCSV(){if(!transactions.length){showNotif('Atenção','Sem transações.');return;}var rows=transactions.map(function(t){return t.date+',"'+t.description+'",'+t.category+','+t.amount.toFixed(2)+','+t.type;}).join('\n');var blob=new Blob(['\uFEFF'+'Data,Descrição,Categoria,Valor,Tipo\n'+rows],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finance_os_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';a.click();showNotif('Exportado',transactions.length+' transações.');}
 function clearAll(){if(!confirm('Apagar tudo?'))return;transactions=[];save();renderDashboard();showNotif('Limpo','Histórico apagado.');}
 function showNotif(title,msg){document.getElementById('notifTitle').textContent=title;document.getElementById('notifMsg').textContent=msg;var el=document.getElementById('notif');el.classList.add('show');setTimeout(function(){el.classList.remove('show');},3500);}
