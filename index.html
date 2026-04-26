@@ -660,6 +660,18 @@ async function loadFromNotion(){
     // Parcelas do Notion
     if(data.parcelas&&data.parcelas.length) notionParcelas=data.parcelas;
 
+    if(data.config){
+      RENDA=data.config.renda||RENDA;
+      LAZER_LIMIT=data.config.teto_variavel||LAZER_LIMIT;
+      VIAGEM=data.config.reserva_viagem||VIAGEM;
+      document.getElementById('rendaInput').value=RENDA;
+      document.getElementById('lazerInput').value=LAZER_LIMIT;
+      document.getElementById('viagemInput').value=VIAGEM;
+      document.getElementById('orc_rendaInput').value=RENDA;
+      document.getElementById('orc_lazerInput').value=LAZER_LIMIT;
+      document.getElementById('orc_viagemInput').value=VIAGEM;
+    }
+
     renderDashboard();
     setConnected(true,'Notion — '+transactions.length+' transações');
     showNotif('Notion',transactions.length+' transações carregadas!');
@@ -797,6 +809,11 @@ function saveConfig(){
   localStorage.setItem('fo_lazer',LAZER_LIMIT);
   localStorage.setItem('fo_viagem',VIAGEM);
   renderDashboard();
+  fetch('/.netlify/functions/notion',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({renda:RENDA,teto_variavel:LAZER_LIMIT,reserva_viagem:VIAGEM,meta_poupanca:1000})
+  }).catch(function(e){console.log('saveConfig erro:',e);});
 }
 
 function switchTab(tab){
