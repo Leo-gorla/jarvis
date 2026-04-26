@@ -1,8 +1,6 @@
 exports.handler = async function(event, context) {
-  const NOTION_TOKEN  = process.env.NOTION_TOKEN;
-  const DB_TRANSACOES = process.env.NOTION_DB_ID       || '05a306e12e124c45aead9f18b49cda26';
-  const DB_FIXOS      = process.env.NOTION_DB_FIXOS    || '7532732c8fad4c8ea21b67c3a52930bf';
-  const DB_PARCELAS   = process.env.NOTION_DB_PARCELAS || 'b412720b97f94f78865cb10fcae03679';
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -12,83 +10,72 @@ exports.handler = async function(event, context) {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  async function queryDB(dbId) {
-    const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_TOKEN}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ page_size: 200 })
+  const sbHeaders = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+  };
+
+  async function queryTable(table, params = '') {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
+      headers: sbHeaders
     });
     return res.json();
   }
 
   try {
-    const [tResult, fResult, pResult] = await Promise.allSettled([
-      queryDB(DB_TRANSACOES),
-      queryDB(DB_FIXOS),
-      queryDB(DB_PARCELAS)
+    const [tResult, fResult, pResult, cResult] = await Promise.allSettled([
+      queryTable('transacoes', 'select=*&order=data.desc'),
+      queryTable('fixos', 'select=*&ativo=eq.true'),
+      queryTable('parcelas', 'select=*'),
+      queryTable('configuracoes', 'select=*&limit=1')
     ]);
 
-    // Extrai valor apenas se fulfilled, senao usa objeto vazio
-    const tData = tResult.status === 'fulfilled' ? tResult.value : {};
-    const fData = fResult.status === 'fulfilled' ? fResult.value : {};
-    const pData = pResult.status === 'fulfilled' ? pResult.value : {};
+    const tData = tResult.status === 'fulfilled' ? tResult.value : [];
+    const fData = fResult.status === 'fulfilled' ? fResult.value : [];
+    const pData = pResult.status === 'fulfilled' ? pResult.value : [];
+    const cData = cResult.status === 'fulfilled' ? cResult.value : [];
 
-    // Log de falhas para debug no Netlify
     if (tResult.status === 'rejected') console.error('Transacoes falhou:', tResult.reason);
     if (fResult.status === 'rejected') console.error('Fixos falhou:', fResult.reason);
     if (pResult.status === 'rejected') console.error('Parcelas falhou:', pResult.reason);
+    if (cResult.status === 'rejected') console.error('Configuracoes falhou:', cResult.reason);
 
-    // Transacoes
-    const transactions = (tData.results || []).map(p => {
-      const props = p.properties;
-      return {
-        id:          p.id,
-        date:        props.Data?.date?.start || '',
-        month:       props.Data?.date?.start?.substr(0, 7) || '',
-        description: props.Descricao?.title?.[0]?.text?.content || '',
-        amount:      props.Valor?.number || 0,
-        category:    props.Categoria?.select?.name || 'Outros',
-        type:        'debit'
-      };
-    }).filter(t => t.description && t.amount > 0);
+    const transactions = (Array.isArray(tData) ? tData : []).map(t => ({
+      id:          t.id,
+      date:        t.data,
+      month:       t.data ? t.data.substr(0, 7) : '',
+      description: t.descricao,
+      amount:      t.valor,
+      category:    t.categoria || 'Outros',
+      type:        t.tipo || 'despesa'
+    }));
 
-    // Fixos
-    const fixos = (fData.results || []).map(p => {
-      const props = p.properties;
-      return {
-        id:        p.id,
-        descricao: props.Descricao?.title?.[0]?.text?.content || '',
-        valor:     props.Valor?.number || 0,
-        categoria: props.Categoria?.select?.name || 'Outros',
-        ativo:     props.Ativo?.select?.name === 'Sim'
-      };
-    }).filter(f => f.ativo);
+    const fixos = (Array.isArray(fData) ? fData : []).map(f => ({
+      id:        f.id,
+      descricao: f.nome,
+      valor:     f.valor,
+      categoria: f.categoria || 'Outros',
+      ativo:     f.ativo
+    }));
 
-    // Parcelas
-    const parcelas = (pData.results || []).map(p => {
-      const props = p.properties;
-      const total = props.TotalParcelas?.number || 0;
-      const pagas = props.ParcelasPagas?.number || 0;
-      return {
-        id:                p.id,
-        descricao:         props.Descricao?.title?.[0]?.text?.content || '',
-        valor:             props.Valor?.number || 0,
-        totalParcelas:     total,
-        parcelasPagas:     pagas,
-        parcelasRestantes: total - pagas,
-        vencimento:        props.Vencimento?.number || null,
-        status:            props.Status?.select?.name || 'Ativo'
-      };
-    }).filter(p => p.status === 'Ativo');
+    const parcelas = (Array.isArray(pData) ? pData : []).map(p => ({
+      id:                p.id,
+      descricao:         p.nome,
+      valor:             p.valor_parcela,
+      totalParcelas:     p.total_parcelas,
+      parcelasPagas:     p.parcelas_pagas,
+      parcelasRestantes: p.total_parcelas - p.parcelas_pagas,
+      vencimento:        null,
+      status:            'Ativo'
+    }));
+
+    const config = cData[0] || { renda: 0, meta_poupanca: 0 };
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ transactions, fixos, parcelas })
+      body: JSON.stringify({ transactions, fixos, parcelas, config })
     };
 
   } catch (error) {
